@@ -1,0 +1,9 @@
+### 课程查询列表接口
+POST {{content_host}}/course/list?pageNo=1&pageSize=10
+Content-Type: application/json
+
+{
+  "courseName": "java",
+  "audiStatus": "202004",
+  "publishStatus": "203001"
+}
