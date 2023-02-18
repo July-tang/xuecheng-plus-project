@@ -8,7 +8,7 @@ import com.xuecheng.content.model.po.Teachplan;
  * 课程计划 Mapper 接口
  * </p>
  *
- * @author itcast
+ * @author july
  */
 public interface TeachplanMapper extends BaseMapper<Teachplan> {
 

@@ -7,3 +7,6 @@ Content-Type: application/json
   "audiStatus": "202004",
   "publishStatus": "203001"
 }
+### 课程分类查询接口
+GET {{content_host}}/course-category/tree-nodes
+Content-Type: application/json
