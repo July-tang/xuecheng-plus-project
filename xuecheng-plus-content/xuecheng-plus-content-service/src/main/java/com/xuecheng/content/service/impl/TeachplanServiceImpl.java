@@ -76,6 +76,33 @@ public class TeachplanServiceImpl implements TeachplanService {
         deleteMedia(teachplanId);
     }
 
+    @Override
+    public void moveUp(Long teachplanId) {
+        changeOrder(teachplanId, -1);
+    }
+
+    @Override
+    public void moveDown(Long teachplanId) {
+        changeOrder(teachplanId, 1);
+    }
+
+    private void changeOrder(Long teachplanId, int d) {
+        Teachplan teachplan = teachplanMapper.selectById(teachplanId);
+        int order = teachplan.getOrderby();
+        LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(Teachplan::getCourseId, teachplan.getCourseId());
+        queryWrapper.eq(Teachplan::getParentid, teachplan.getParentid());
+        queryWrapper.eq(Teachplan::getOrderby, order + d);
+        Teachplan changedPlan = teachplanMapper.selectOne(queryWrapper);
+        if (changedPlan == null) {
+            XueChengPlusException.cast("该课程计划已处于顶部或者底部！");
+        }
+        teachplan.setOrderby(order + d);
+        changedPlan.setOrderby(order);
+        teachplanMapper.updateById(teachplan);
+        teachplanMapper.updateById(changedPlan);
+    }
+
     private void deleteMedia(Long teachplanId) {
         LambdaQueryWrapper<TeachplanMedia> mediaLambdaQueryWrapper = new LambdaQueryWrapper<>();
         // 删除媒资信息中对应teachplanId的数据
