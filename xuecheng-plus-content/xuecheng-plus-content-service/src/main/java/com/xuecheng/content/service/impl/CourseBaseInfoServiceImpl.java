@@ -60,7 +60,7 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         return new PageResult<>(pageInfo.getRecords(), pageInfo.getTotal(), pageParams.getPageNo(), pageParams.getPageSize());
     }
 
-    @Transactional
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public CourseBaseInfoDto createCourseBase(Long companyId, AddCourseDto addCourseDto) {
         //封装课程基本信息
