@@ -110,9 +110,9 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         Long courseId = editCourseDto.getId();
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
         CourseMarket courseMarket = courseMarketService.getById(courseId);
-        if (!companyId.equals(courseBase.getCompanyId())) {
-            XueChengPlusException.cast("只允许修改本机构的课程！");
-        }
+//        if (!companyId.equals(courseBase.getCompanyId())) {
+//            XueChengPlusException.cast("只允许修改本机构的课程！");
+//        }
         BeanUtils.copyProperties(editCourseDto, courseBase);
         courseBase.setChangeDate(LocalDateTime.now());
         if (courseMarket == null) {
