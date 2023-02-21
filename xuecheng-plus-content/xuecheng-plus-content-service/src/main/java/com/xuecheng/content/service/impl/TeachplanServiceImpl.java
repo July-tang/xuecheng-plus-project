@@ -127,6 +127,11 @@ public class TeachplanServiceImpl implements TeachplanService {
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Teachplan::getCourseId, courseId);
         queryWrapper.eq(Teachplan::getParentid, parentId);
-        return teachplanMapper.selectCount(queryWrapper);
+        queryWrapper.orderByDesc(Teachplan::getOrderby);
+        List<Teachplan> list = teachplanMapper.selectList(queryWrapper);
+        if (list.size() == 0) {
+            return 0;
+        }
+        return list.get(0).getOrderby();
     }
 }
