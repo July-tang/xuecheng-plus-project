@@ -7,15 +7,15 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.content.mapper.CourseBaseMapper;
 import com.xuecheng.content.mapper.CourseCategoryMapper;
-import com.xuecheng.content.mapper.CourseMarketMapper;
+import com.xuecheng.content.mapper.CourseTeacherMapper;
+import com.xuecheng.content.mapper.TeachplanMapper;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
-import com.xuecheng.content.model.po.CourseBase;
-import com.xuecheng.content.model.po.CourseCategory;
-import com.xuecheng.content.model.po.CourseMarket;
+import com.xuecheng.content.model.po.*;
 import com.xuecheng.content.service.CourseBaseInfoService;
+import com.xuecheng.content.service.CourseMarketService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -38,10 +38,16 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
     CourseBaseMapper courseBaseMapper;
 
     @Resource
-    CourseMarketServiceImpl courseMarketService;
+    CourseMarketService courseMarketService;
 
     @Resource
     CourseCategoryMapper courseCategoryMapper;
+
+    @Resource
+    CourseTeacherMapper courseTeacherMapper;
+
+    @Resource
+    TeachplanMapper teachplanMapper;
 
     @Override
     public PageResult<CourseBase> queryCourseBaseList(PageParams pageParams, QueryCourseParamsDto queryCourseParamsDto) {
@@ -130,6 +136,27 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
             throw new XueChengPlusException("修改课程信息失败");
         }
         return getCourseBaseInfo(courseId);
+    }
+
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public void deleteCourseBase(Long companyId, Long courseId) {
+        CourseBase courseBase = courseBaseMapper.selectById(courseId);
+//        if (!companyId.equals(courseBase.getCompanyId())) {
+//            XueChengPlusException.cast("只允许修改本机构的课程！");
+//        }
+        //删除课程计划信息
+        LambdaQueryWrapper<Teachplan> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Teachplan::getCourseId, courseId);
+        teachplanMapper.delete(wrapper);
+        //删除课程老师信息
+        LambdaQueryWrapper<CourseTeacher> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(CourseTeacher::getCourseId, courseId);
+        courseTeacherMapper.delete(queryWrapper);
+        //删除课程营销信息
+        courseMarketService.removeById(courseId);
+        //删除课程基本信息
+        courseBaseMapper.deleteById(courseId);
     }
 
 

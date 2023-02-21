@@ -28,16 +28,17 @@ public class CourseBaseInfoController {
     @Resource
     CourseBaseInfoService courseBaseInfoService;
 
-    @ApiOperation("课程查询接口")
+    @ApiOperation("课程列表查询接口")
     @PostMapping("/list")
     public PageResult<CourseBase> list(PageParams params, @RequestBody QueryCourseParamsDto queryCourseParamsDto) {
         return courseBaseInfoService.queryCourseBaseList(params, queryCourseParamsDto);
     }
 
-    @ApiOperation("课程基本信息新增接口")
+    @ApiOperation("课程信息新增接口")
     @PostMapping
     public CourseBaseInfoDto createCourseBase(@RequestBody @Validated AddCourseDto addCourseDto) {
-        return courseBaseInfoService.createCourseBase(37L, addCourseDto);
+        Long companyId = 37L;
+        return courseBaseInfoService.createCourseBase(companyId, addCourseDto);
     }
 
     @ApiOperation("课程信息查询接口")
@@ -47,8 +48,16 @@ public class CourseBaseInfoController {
     }
 
     @ApiOperation("课程信息修改接口")
-    @PutMapping()
+    @PutMapping
     public CourseBaseInfoDto updateCourseBase(@RequestBody @Validated EditCourseDto editCourseDto) {
-        return courseBaseInfoService.updateCourseBase(37L, editCourseDto);
+        Long companyId = 37L;
+        return courseBaseInfoService.updateCourseBase(companyId, editCourseDto);
+    }
+
+    @ApiOperation("课程信息删除接口")
+    @DeleteMapping("/{courseId}")
+    public void deleteCourseBase(@PathVariable Long courseId) {
+        Long companyId = 37L;
+        courseBaseInfoService.deleteCourseBase(37L, courseId);
     }
 }
