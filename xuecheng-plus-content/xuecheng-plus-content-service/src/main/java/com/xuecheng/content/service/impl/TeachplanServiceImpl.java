@@ -8,6 +8,7 @@ import com.xuecheng.content.model.dto.TeachplanDto;
 import com.xuecheng.content.model.po.Teachplan;
 import com.xuecheng.content.model.po.TeachplanMedia;
 import com.xuecheng.content.service.TeachplanService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +20,7 @@ import java.util.List;
 /**
  * @author july
  */
+@Slf4j
 @Service
 public class TeachplanServiceImpl implements TeachplanService {
 
@@ -65,9 +67,9 @@ public class TeachplanServiceImpl implements TeachplanService {
         }
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Teachplan::getParentid, teachplanId);
-        List<Teachplan> teachplans = teachplanMapper.selectList(queryWrapper);
-        if (teachplans.size() > 0) {
-            for (Teachplan teachplan : teachplans) {
+        List<Teachplan> teachplanList = teachplanMapper.selectList(queryWrapper);
+        if (teachplanList.size() > 0) {
+            for (Teachplan teachplan : teachplanList) {
                 teachplanMapper.deleteById(teachplan.getId());
                 deleteMedia(teachplan.getId());
             }
@@ -92,12 +94,23 @@ public class TeachplanServiceImpl implements TeachplanService {
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Teachplan::getCourseId, teachplan.getCourseId());
         queryWrapper.eq(Teachplan::getParentid, teachplan.getParentid());
-        queryWrapper.eq(Teachplan::getOrderby, order + d);
-        Teachplan changedPlan = teachplanMapper.selectOne(queryWrapper);
-        if (changedPlan == null) {
+        queryWrapper.orderByAsc(Teachplan::getOrderby);
+        List<Teachplan> teachplanList = teachplanMapper.selectList(queryWrapper);
+        int left = 0, right = teachplanList.size() - 1;
+        //二分查找课程计划所在的位置
+        while (left < right) {
+            int mid = (left + right + 1) >> 1;
+            if (teachplanList.get(mid).getOrderby() <= order) {
+                left = mid;
+            } else {
+                right = mid - 1;
+            }
+        }
+        if (left + d < 0 || left + d >= teachplanList.size()) {
             XueChengPlusException.cast("该课程计划已处于顶部或者底部！");
         }
-        teachplan.setOrderby(order + d);
+        Teachplan changedPlan = teachplanList.get(left + d);
+        teachplan.setOrderby(changedPlan.getOrderby());
         changedPlan.setOrderby(order);
         teachplanMapper.updateById(teachplan);
         teachplanMapper.updateById(changedPlan);
