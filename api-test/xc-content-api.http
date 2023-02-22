@@ -1,5 +1,5 @@
 ### 课程查询列表接口
-POST {{content_host}}/course/list?pageNo=1&pageSize=10
+POST {{gateway_host}}/content/course/list?pageNo=1&pageSize=10
 Content-Type: application/json
 
 {
@@ -8,10 +8,10 @@ Content-Type: application/json
   "publishStatus": "203001"
 }
 ### 课程分类查询接口
-GET {{content_host}}/course-category/tree-nodes
+GET {{gateway_host}}/content/course-category/tree-nodes
 Content-Type: application/json
 ### 课程信息新增接口
-POST {{content_host}}/course
+POST {{gateway_host}}/content/course
 Content-Type: application/json
 
 {
@@ -34,10 +34,10 @@ Content-Type: application/json
   "objectives": ""
 }
 ### 根据课程id查询课程基本信息
-GET {{content_host}}/course/22
+GET {{gateway_host}}/content/course/22
 Content-Type: application/json
 ### 更新课程接口
-PUT {{content_host}}/course/
+PUT {{gateway_host}}/content/course/
 Content-Type: application/json
 
 {
@@ -74,7 +74,7 @@ Content-Type: application/json
   ]
 }
 ### 查询课程计划树形结构
-GET {{content_host}}/teachplan/117/tree-nodes
+GET {{gateway_host}}/content/teachplan/117/tree-nodes
 Content-Type: application/json
 
 
