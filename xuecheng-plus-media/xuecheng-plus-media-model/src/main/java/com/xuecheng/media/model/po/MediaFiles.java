@@ -55,6 +55,11 @@ public class MediaFiles implements Serializable {
     private String bucket;
 
     /**
+     * 文件路径
+     */
+    private String filePath;
+
+    /**
      * 文件标识
      */
     private String fileId;
