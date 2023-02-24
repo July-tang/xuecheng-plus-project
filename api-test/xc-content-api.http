@@ -76,5 +76,12 @@ Content-Type: application/json
 ### 查询课程计划树形结构
 GET {{gateway_host}}/content/teachplan/117/tree-nodes
 Content-Type: application/json
+### 上传文件
+POST {{media_host}}/media/upload/coursefile
+Content-Type: multipart/form-data; boundary=WebAppBoundary
 
+--WebAppBoundary
+Content-Disposition: form-data; name="filedata"; filename="1.jpg"
+Content-Type: application/octet-stream
 
+< d:/BaiduNetdiskDownload/test.jpg
