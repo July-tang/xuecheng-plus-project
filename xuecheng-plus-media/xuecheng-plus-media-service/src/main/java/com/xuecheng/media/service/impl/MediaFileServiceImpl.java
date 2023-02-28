@@ -10,14 +10,17 @@ import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
 import com.xuecheng.base.model.RestResponse;
 import com.xuecheng.media.mapper.MediaFilesMapper;
+import com.xuecheng.media.mapper.MediaProcessMapper;
 import com.xuecheng.media.model.dto.QueryMediaParamsDto;
 import com.xuecheng.media.model.dto.UploadFileParamsDto;
 import com.xuecheng.media.model.dto.UploadFileResultDto;
 import com.xuecheng.media.model.po.MediaFiles;
+import com.xuecheng.media.model.po.MediaProcess;
 import com.xuecheng.media.service.MediaFileService;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.UploadObjectArgs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.utils.IOUtils;
@@ -25,6 +28,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.*;
@@ -46,6 +50,9 @@ public class MediaFileServiceImpl implements MediaFileService {
     MediaFilesMapper mediaFilesMapper;
 
     @Resource
+    MediaProcessMapper mediaProcessMapper;
+
+    @Resource
     MinioClient minioClient;
 
     @Value("${minio.bucket.files}")
@@ -53,7 +60,6 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Value("${minio.bucket.videofiles}")
     private String bucketVideo;
-
     @Override
     public PageResult<MediaFiles> queryMediaFiles(Long companyId, PageParams pageParams, QueryMediaParamsDto queryMediaParamsDto) {
 
@@ -74,6 +80,7 @@ public class MediaFileServiceImpl implements MediaFileService {
                 pageParams.getPageNo(), pageParams.getPageSize());
     }
 
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public UploadFileResultDto uploadFile(Long companyId, UploadFileParamsDto uploadFileParamsDto, byte[] bytes, String folder, String objectName) {
         //生成md5值
@@ -151,7 +158,7 @@ public class MediaFileServiceImpl implements MediaFileService {
             try (RandomAccessFile rafWrite = new RandomAccessFile(mergeFile, "rw")) {
                 for (File chunkFile : chunkFiles) {
                     try (FileInputStream chunkFileStream = new FileInputStream(chunkFile)) {
-                        int len = - 1;
+                        int len;
                         while ((len = chunkFileStream.read(b)) != -1) {
                             rafWrite.write(b, 0, len);
                         }
@@ -180,7 +187,7 @@ public class MediaFileServiceImpl implements MediaFileService {
             //将临时文件上传至minio
             String mergeFilePath = getFilePathByMd5(fileMd5, extName);
             try {
-                addMediaFilesToMinio(fileToBytes(mergeFile), bucketVideo, mergeFilePath);
+                addMediaFilesToMinio(mergeFile.getAbsolutePath(), bucketVideo, mergeFilePath);
                 log.debug("合并文件上传Minio完成{}", mergeFile.getAbsolutePath());
             } catch (Exception e) {
                 XueChengPlusException.cast("合并文件时上传文件出错");
@@ -206,8 +213,31 @@ public class MediaFileServiceImpl implements MediaFileService {
         return mediaFilesMapper.selectById(mediaId);
     }
 
+    @Override
+    public void addMediaFilesToMinio(String filePath, String bucket, String objectName) {
+        //扩展名
+        String extension = null;
+        if(objectName.contains(".")){
+            extension = objectName.substring(objectName.lastIndexOf("."));
+        }
+        //获取扩展名对应的媒体类型
+        String contentType = getMimeTypeByExtension(extension);
+        try {
+            minioClient.uploadObject(
+                    UploadObjectArgs.builder()
+                            .bucket(bucket)
+                            .object(objectName)
+                            .filename(filePath)
+                            .contentType(contentType)
+                            .build());
+        } catch (Exception e) {
+            e.printStackTrace();
+            XueChengPlusException.cast("上传文件到文件系统出错");
+        }
+    }
+
     /**
-     * 将文件上传到Minio
+     * 将文件上传到Minio(小文件)
      *
      * @param bytes 文件字节数组
      * @param bucket bucket名称
@@ -242,6 +272,12 @@ public class MediaFileServiceImpl implements MediaFileService {
     public MediaFiles addMediaFilesToDb(Long companyId, String fileMd5, UploadFileParamsDto uploadFileParamsDto,
                                         String bucket, String objectName){
         MediaFiles mediaFiles = mediaFilesMapper.selectById(fileMd5);
+        String extension = "";
+        if(objectName.contains(".")){
+            //文件扩展名
+            extension = objectName.substring(objectName.lastIndexOf("."));
+        }
+        String contentType = getMimeTypeByExtension(extension);
         if (mediaFiles == null) {
             //新增
             mediaFiles = new MediaFiles();
@@ -249,6 +285,9 @@ public class MediaFileServiceImpl implements MediaFileService {
             mediaFiles.setId(fileMd5);
             mediaFiles.setFileId(fileMd5);
             mediaFiles.setCompanyId(companyId);
+            if(contentType.contains("image") || contentType.contains("mp4")){
+                mediaFiles.setUrl("/" + bucket + "/" + objectName);
+            }
             mediaFiles.setUrl("/" + bucket + "/" + objectName);
             mediaFiles.setBucket(bucket);
             mediaFiles.setCreateDate(LocalDateTime.now());
@@ -256,6 +295,12 @@ public class MediaFileServiceImpl implements MediaFileService {
             mediaFiles.setAuditStatus("002003");
             if (mediaFilesMapper.insert(mediaFiles) < 0) {
                 XueChengPlusException.cast("保存文件信息失败");
+            }
+            if("video/x-msvideo".equals(contentType)){
+                MediaProcess mediaProcess = new MediaProcess();
+                BeanUtils.copyProperties(mediaFiles, mediaProcess);
+                mediaProcess.setStatus("1");
+                mediaProcessMapper.insert(mediaProcess);
             }
         }
         return mediaFiles;
@@ -381,21 +426,5 @@ public class MediaFileServiceImpl implements MediaFileService {
             }
         }
         return file;
-    }
-
-    /**
-     * 将File转为byte数组
-     * @param file 待转换的文件
-     * @return 字节数组
-     */
-    private byte[] fileToBytes(File file) {
-        byte[] bytes = null;
-        try(BufferedInputStream bufferedInputStream = new BufferedInputStream(new FileInputStream(file))) {
-            bytes = new byte[bufferedInputStream.available()];
-            int read = bufferedInputStream.read(bytes);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return bytes;
     }
 }

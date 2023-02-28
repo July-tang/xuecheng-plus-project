@@ -83,4 +83,13 @@ public interface MediaFileService {
      * @return 媒资文件信息
      */
     MediaFiles getFileById(String mediaId);
+
+    /**
+     * 将文件上传到Minio(大文件)
+     *
+     * @param filePath 文件路径
+     * @param bucket bucket名称
+     * @param objectName 对象名称
+     */
+    void addMediaFilesToMinio(String filePath, String bucket, String objectName);
 }
