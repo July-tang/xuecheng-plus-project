@@ -85,3 +85,14 @@ Content-Disposition: form-data; name="filedata"; filename="1.jpg"
 Content-Type: application/octet-stream
 
 < d:/BaiduNetdiskDownload/test.jpg
+### 查询媒资文件
+POST {{media_host}}/media/files
+Content-Type: application/json
+
+{
+  "auditStatus": "002003",
+  "filename": "test",
+  "type": "001002"
+}
+### 删除课程计划媒资关系
+DELETE {{content_host}}/content/teachplan/association/media/308/2f747c7658b6684da667c9021a35d4e0
