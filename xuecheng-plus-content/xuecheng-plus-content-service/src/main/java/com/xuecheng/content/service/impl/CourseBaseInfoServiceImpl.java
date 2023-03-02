@@ -2,6 +2,7 @@ package com.xuecheng.content.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.xuecheng.base.enums.DictionaryCode;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
@@ -24,15 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.time.LocalDateTime;
-
 /**
  * @author july
  */
 @Service
 @Slf4j
 public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
-
-    private final String COURSE_CHARGE = "201001";
 
     @Resource
     CourseBaseMapper courseBaseMapper;
@@ -72,8 +70,8 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         //封装课程基本信息
         CourseBase courseBase = new CourseBase();
         BeanUtils.copyProperties(addCourseDto, courseBase);
-        courseBase.setAuditStatus("202002");
-        courseBase.setStatus("203001");
+        courseBase.setAuditStatus(DictionaryCode.AUDIT_NOT_SUBMIT);
+        courseBase.setStatus(DictionaryCode.COURSE_NOT_SUBMIT);
         courseBase.setCompanyId(companyId);
         courseBase.setCreateDate(LocalDateTime.now());
 
@@ -166,7 +164,7 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
             XueChengPlusException.cast("请设置收费规则");
         }
         // 如果课程收费，则判断价格是否正常
-        if (COURSE_CHARGE.equals(charge)) {
+        if (DictionaryCode.COURSE_CHARGE.equals(charge)) {
             Float price = courseMarket.getPrice();
             if (price == null || price <= 0) {
                 XueChengPlusException.cast("课程设置了收费，价格不能为空，且必须大于0");
