@@ -1,6 +1,8 @@
 package com.xuecheng.media.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.xuecheng.base.config.RabbitMqConfig;
+import com.xuecheng.base.utils.Mp4VideoUtil;
 import com.xuecheng.media.mapper.MediaFilesMapper;
 import com.xuecheng.media.mapper.MediaProcessHistoryMapper;
 import com.xuecheng.media.mapper.MediaProcessMapper;
@@ -8,11 +10,17 @@ import com.xuecheng.media.model.po.MediaFiles;
 import com.xuecheng.media.model.po.MediaProcess;
 import com.xuecheng.media.model.po.MediaProcessHistory;
 import com.xuecheng.media.service.MediaFileProcessService;
+import com.xuecheng.media.service.MediaFileService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -23,6 +31,8 @@ import java.util.List;
 @Service
 public class MediaFileProcessServiceImpl implements MediaFileProcessService {
 
+    private static final String SUCCESS = "success";
+
     @Resource
     MediaProcessMapper mediaProcessMapper;
 
@@ -31,6 +41,12 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
 
     @Resource
     MediaProcessHistoryMapper mediaProcessHistoryMapper;
+
+    @Resource
+    MediaFileService mediaFileService;
+
+    @Value("${videoprocess.ffmpegpath}")
+    String ffmpegPath;
 
     @Override
     public List<MediaProcess> getMediaProcessList(int shardTotal, int shardIndex, int count) {
@@ -70,5 +86,64 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
         mediaProcessHistoryMapper.insert(mediaProcessHistory);
         //删除mediaProcess
         mediaProcessMapper.deleteById(mediaProcess.getId());
+    }
+
+    @RabbitListener(queues = {RabbitMqConfig.VIDEO_PROCESS_QUEUE_NAME})
+    public void videoProcessMessage(Message msg){
+        File originFile = null;
+        File mp4File = null;
+        try {
+            log.info("收到视频处理消息：{}", msg);
+
+            String id = new String(msg.getBody());
+            MediaProcess mediaProcess = mediaProcessMapper.selectById(id);
+            String originPath = mediaProcess.getFilePath();
+            String bucket = mediaProcess.getBucket();
+            String fileId = mediaProcess.getFileId();
+            //处理结束的视频文件
+            originFile = new File(originPath);
+            String result = "";
+            try {
+                mp4File = File.createTempFile("mp4", ".mp4");
+            } catch (IOException e) {
+                log.error("处理视频前创建临时文件失败");
+                throw new RuntimeException(e);
+            }
+            try {
+                Mp4VideoUtil videoUtil = new Mp4VideoUtil(ffmpegPath, originPath, mp4File.getName(), mp4File.getAbsolutePath());
+                result = videoUtil.generateMp4();
+            } catch (Exception e) {
+                log.error("处理视频文件:{},出错:{}", originPath, e.getMessage());
+                throw new RuntimeException(e);
+            }
+            if(!SUCCESS.equals(result)) {
+                //记录错误信息
+                log.error("处理视频失败,错误信息:{}", result);
+                saveProcessFinishStatus(mediaProcess.getId(),"3",fileId,null, result);
+                throw new RuntimeException(result);
+            }
+            String objectName = getMp4FilePath(fileId);
+            try {
+                mediaFileService.addMediaFilesToMinio(mp4File.getAbsolutePath(), bucket, objectName);
+            } catch (Exception e) {
+                log.error("上传视频失败,视频地址:{},错误信息:{}", objectName, e.getMessage());
+                throw new RuntimeException(e);
+            }
+            String url = "/" + bucket + "/" + objectName;
+            saveProcessFinishStatus(mediaProcess.getId(),"2",fileId, url,null);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                originFile.delete();
+                mp4File.delete();
+            } catch (Exception e) {
+                log.info("删除临时文件出错: {}", e.getMessage());
+            }
+        }
+    }
+
+    private String getMp4FilePath(String fileMd5){
+        return fileMd5.charAt(0) + "/" + fileMd5.charAt(1) + "/" + fileMd5 + "/" +fileMd5 + ".mp4";
     }
 }

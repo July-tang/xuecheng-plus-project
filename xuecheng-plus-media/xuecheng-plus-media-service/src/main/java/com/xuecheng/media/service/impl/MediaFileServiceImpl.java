@@ -5,6 +5,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
+import com.xuecheng.base.config.RabbitMqConfig;
+import com.xuecheng.base.enums.DictionaryCode;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
@@ -24,6 +26,7 @@ import io.minio.UploadObjectArgs;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.utils.IOUtils;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -32,11 +35,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.io.*;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 
 /**
  * @author July
@@ -54,6 +54,9 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Resource
     MinioClient minioClient;
+
+    @Resource
+    RabbitTemplate rabbitTemplate;
 
     @Value("${minio.bucket.files}")
     private String bucketFiles;
@@ -107,7 +110,7 @@ public class MediaFileServiceImpl implements MediaFileService {
             XueChengPlusException.cast("上传到minio时发生错误");
         }
         //从数据库查询文件
-        MediaFiles mediaFiles = addMediaFilesToDb(companyId, fileId, uploadFileParamsDto, bucketFiles, objectName);
+        MediaFiles mediaFiles = addMediaFilesToDb(companyId, fileId, uploadFileParamsDto, bucketFiles, objectName, null);
         UploadFileResultDto uploadFileResultDto = new UploadFileResultDto();
         BeanUtils.copyProperties(mediaFiles, uploadFileResultDto);
         return uploadFileResultDto;
@@ -183,7 +186,6 @@ public class MediaFileServiceImpl implements MediaFileService {
                 e.printStackTrace();
                 XueChengPlusException.cast("合并文件校验异常");
             }
-
             //将临时文件上传至minio
             String mergeFilePath = getFilePathByMd5(fileMd5, extName);
             try {
@@ -192,15 +194,15 @@ public class MediaFileServiceImpl implements MediaFileService {
             } catch (Exception e) {
                 XueChengPlusException.cast("合并文件时上传文件出错");
             }
+
             //将文件信息存入数据库
-            addMediaFilesToDb(companyId, fileMd5, uploadFileParamsDto, bucketVideo, mergeFilePath);
+            addMediaFilesToDb(companyId, fileMd5, uploadFileParamsDto, bucketVideo, mergeFilePath, mergeFile.getAbsolutePath());
         } finally {
             //删除临时文件
             try {
                 for (File file : chunkFiles) {
                     file.delete();
                 }
-                mergeFile.delete();
             } catch (Exception e) {
                 log.info("删除临时文件出错: {}", e.getMessage());
             }
@@ -267,10 +269,11 @@ public class MediaFileServiceImpl implements MediaFileService {
      * @param uploadFileParamsDto 上传文件参数
      * @param bucket 文件保存的桶
      * @param objectName 文件名称
+     * @param absolutePath 文件所处路径
      * @return com.xuecheng.media.model.po.MediaFiles 媒资文件信息
      */
     public MediaFiles addMediaFilesToDb(Long companyId, String fileMd5, UploadFileParamsDto uploadFileParamsDto,
-                                        String bucket, String objectName){
+                                        String bucket, String objectName, String absolutePath){
         MediaFiles mediaFiles = mediaFilesMapper.selectById(fileMd5);
         String extension = "";
         if(objectName.contains(".")){
@@ -285,22 +288,23 @@ public class MediaFileServiceImpl implements MediaFileService {
             mediaFiles.setId(fileMd5);
             mediaFiles.setFileId(fileMd5);
             mediaFiles.setCompanyId(companyId);
-            if(contentType.contains("image") || contentType.contains("mp4")){
-                mediaFiles.setUrl("/" + bucket + "/" + objectName);
-            }
             mediaFiles.setUrl("/" + bucket + "/" + objectName);
             mediaFiles.setBucket(bucket);
             mediaFiles.setCreateDate(LocalDateTime.now());
             mediaFiles.setStatus("1");
-            mediaFiles.setAuditStatus("002003");
+            mediaFiles.setAuditStatus(DictionaryCode.AUDIT_SUBMIT);
             if (mediaFilesMapper.insert(mediaFiles) < 0) {
                 XueChengPlusException.cast("保存文件信息失败");
             }
-            if("video/x-msvideo".equals(contentType)){
+            if("video/x-msvideo".equals(contentType)) {
                 MediaProcess mediaProcess = new MediaProcess();
                 BeanUtils.copyProperties(mediaFiles, mediaProcess);
                 mediaProcess.setStatus("1");
+                mediaProcess.setFilePath(absolutePath);
                 mediaProcessMapper.insert(mediaProcess);
+                rabbitTemplate.convertAndSend(RabbitMqConfig.VIDEO_PROCESS_EXCHANGE_NAME,
+                        RabbitMqConfig.VIDEO_PROCESS_ROUTING_KEY,
+                        String.valueOf(mediaProcess.getId()));
             }
         }
         return mediaFiles;
