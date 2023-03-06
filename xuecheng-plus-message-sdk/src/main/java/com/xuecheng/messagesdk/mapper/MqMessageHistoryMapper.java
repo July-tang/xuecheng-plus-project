@@ -1,14 +1,14 @@
-package com.xuecheng.media.mapper;
+package com.xuecheng.messagesdk.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import com.xuecheng.media.model.po.MqMessageHistory;
+import com.xuecheng.messagesdk.model.po.MqMessageHistory;
 
 /**
  * <p>
  *  Mapper 接口
  * </p>
  *
- * @author itcast
+ * @author july
  */
 public interface MqMessageHistoryMapper extends BaseMapper<MqMessageHistory> {
 

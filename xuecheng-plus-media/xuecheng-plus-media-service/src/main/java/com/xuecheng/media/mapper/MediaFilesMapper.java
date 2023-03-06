@@ -8,7 +8,7 @@ import com.xuecheng.media.model.po.MediaFiles;
  * 媒资信息 Mapper 接口
  * </p>
  *
- * @author itcast
+ * @author july
  */
 public interface MediaFilesMapper extends BaseMapper<MediaFiles> {
 

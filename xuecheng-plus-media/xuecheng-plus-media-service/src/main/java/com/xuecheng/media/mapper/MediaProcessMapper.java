@@ -12,7 +12,7 @@ import java.util.List;
  *  Mapper 接口
  * </p>
  *
- * @author itcast
+ * @author july
  */
 public interface MediaProcessMapper extends BaseMapper<MediaProcess> {
 

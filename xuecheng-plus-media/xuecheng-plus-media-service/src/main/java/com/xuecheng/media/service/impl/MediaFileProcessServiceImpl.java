@@ -1,7 +1,6 @@
 package com.xuecheng.media.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.xuecheng.base.config.RabbitMqConfig;
 import com.xuecheng.base.utils.Mp4VideoUtil;
 import com.xuecheng.media.mapper.MediaFilesMapper;
 import com.xuecheng.media.mapper.MediaProcessHistoryMapper;
@@ -11,6 +10,7 @@ import com.xuecheng.media.model.po.MediaProcess;
 import com.xuecheng.media.model.po.MediaProcessHistory;
 import com.xuecheng.media.service.MediaFileProcessService;
 import com.xuecheng.media.service.MediaFileService;
+import com.xuecheng.messagesdk.config.RabbitMqConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;

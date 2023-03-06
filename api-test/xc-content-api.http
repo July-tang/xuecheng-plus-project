@@ -96,3 +96,7 @@ Content-Type: application/json
 }
 ### 删除课程计划媒资关系
 DELETE {{content_host}}/content/teachplan/association/media/308/2f747c7658b6684da667c9021a35d4e0
+### 课程提交审核
+POST {{content_host}}/content/courseaudit/commit/123
+### 课程发布
+POST {{content_host}}/content/coursepublish/123

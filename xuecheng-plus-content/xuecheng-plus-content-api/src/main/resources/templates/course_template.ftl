@@ -182,7 +182,7 @@
                                 <div class="drop-down" style="height: 260px;">
                                     <ul class="list-box">
                                         <#list firstNode.teachPlanTreeNodes as secondNode>
-                                            <li><a href="http://www.51xuecheng.cn/course/preview/learning.html?id=${model.courseBase.id}&chapter=${secondNode.teachplanMedia.teachplanId!''}" target="_blank">${secondNode.pname}</a></li>
+                                            <li><a href="http://www.51xuecheng.cn/course/preview/learning.html?id=${model.courseBase.id}&chapter=<#if secondNode.teachplanMedia??>${secondNode.teachplanMedia.teachplanId!''} <#else> ${''}</#if>" target="_blank">${secondNode.pname}</a></li>
                                         </#list>
                                     </ul>
                                 </div>
