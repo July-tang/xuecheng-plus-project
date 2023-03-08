@@ -1,6 +1,8 @@
 package com.xuecheng.base.model;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 import java.util.List;
@@ -9,8 +11,10 @@ import java.util.List;
  * @description 分页查询结果模型类
  * @author July
  */
- @Data
- @ToString
+@Data
+@ToString
+@NoArgsConstructor
+@AllArgsConstructor
 public class PageResult<T> {
     /**
      * 数据列表
@@ -31,12 +35,4 @@ public class PageResult<T> {
      * 每页记录数
      */
     private long pageSize;
-
-    public PageResult(List<T> items, long counts, long page, long pageSize) {
-        this.items = items;
-        this.counts = counts;
-        this.page = page;
-        this.pageSize = pageSize;
-    }
-
 }

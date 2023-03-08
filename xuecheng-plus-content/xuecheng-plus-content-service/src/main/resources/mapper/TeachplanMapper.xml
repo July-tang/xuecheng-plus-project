@@ -91,4 +91,15 @@
         WHERE p.parentid = '0' AND p.course_id = #{id}
         ORDER BY p.orderby, c.orderby
     </select>
+
+    <select id="getMaxOrder" resultType="int">
+        SELECT
+            MAX( orderby )
+        FROM
+            teachplan
+        WHERE
+            parentid = #{parentId}
+          AND course_id = #{courseId}
+
+    </select>
 </mapper>

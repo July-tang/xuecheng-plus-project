@@ -45,7 +45,7 @@ public class TeachplanServiceImpl implements TeachplanService {
             Teachplan plan = new Teachplan();
             BeanUtils.copyProperties(teachplanDto, plan);
             plan.setCreateDate(LocalDateTime.now());
-            plan.setOrderby(getTeachplanCount(plan.getCourseId(), plan.getParentid()) + 1);
+            plan.setOrderby(teachplanMapper.getMaxOrder(plan.getCourseId(), plan.getParentid()) + 1);
             if (teachplanMapper.insert(plan) <= 0) {
                 XueChengPlusException.cast("新增失败");
             }
@@ -156,17 +156,5 @@ public class TeachplanServiceImpl implements TeachplanService {
         // 删除teachplanId对应的所有媒资信息
         mediaLambdaQueryWrapper.eq(TeachplanMedia::getTeachplanId, teachplanId);
         teachplanMediaMapper.delete(mediaLambdaQueryWrapper);
-    }
-
-    private int getTeachplanCount(Long courseId, Long parentId) {
-        LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Teachplan::getCourseId, courseId);
-        queryWrapper.eq(Teachplan::getParentid, parentId);
-        queryWrapper.orderByDesc(Teachplan::getOrderby);
-        List<Teachplan> list = teachplanMapper.selectList(queryWrapper);
-        if (list.size() == 0) {
-            return 0;
-        }
-        return list.get(0).getOrderby();
     }
 }

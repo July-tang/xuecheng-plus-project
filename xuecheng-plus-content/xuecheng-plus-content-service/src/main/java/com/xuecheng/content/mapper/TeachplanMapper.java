@@ -20,4 +20,13 @@ public interface TeachplanMapper extends BaseMapper<Teachplan> {
      * @return 课程计划dto列表
      */
     List<TeachplanDto> selectTreeNodes(Long courseId);
+
+
+    /**
+     * 获取最大课程计划排序
+     * @param courseId 课程id
+     * @param parentId 课程计划父id
+     * @return order最大值
+     */
+    int getMaxOrder(Long courseId, Long parentId);
 }
