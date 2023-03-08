@@ -1,11 +1,9 @@
 package com.xuecheng;
 
 import com.xuecheng.content.config.MultipartSupportConfig;
-import com.xuecheng.content.feignclient.MediaServiceClient;
+import com.xuecheng.content.feign.client.MediaServiceClient;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;

@@ -55,13 +55,12 @@ public class CourseSearchServiceImpl implements CourseSearchService {
 
     @Override
     public SearchPageResultDto<CourseIndex> queryCoursePubIndex(PageParams pageParams, SearchCourseParamDto courseSearchParam) {
-
         //设置索引
         SearchRequest searchRequest = new SearchRequest(courseIndexStore);
 
         SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
         BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-        //source源字段过虑
+        //source源字段过滤
         String[] sourceFieldsArray = sourceFields.split(",");
         searchSourceBuilder.fetchSource(sourceFieldsArray, new String[]{});
         if (courseSearchParam == null){
@@ -77,20 +76,20 @@ public class CourseSearchServiceImpl implements CourseSearchService {
             multiMatchQueryBuilder.field("name",10);
             boolQueryBuilder.must(multiMatchQueryBuilder);
         }
-        //过虑
-        if(StringUtils.isNotEmpty(courseSearchParam.getMt())){
-            boolQueryBuilder.filter(QueryBuilders.termQuery("mtName",courseSearchParam.getMt()));
+        //过滤
+        if (StringUtils.isNotEmpty(courseSearchParam.getMt())) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("mtName", courseSearchParam.getMt()));
         }
-        if(StringUtils.isNotEmpty(courseSearchParam.getSt())){
-            boolQueryBuilder.filter(QueryBuilders.termQuery("stName",courseSearchParam.getSt()));
+        if (StringUtils.isNotEmpty(courseSearchParam.getSt())) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("stName", courseSearchParam.getSt()));
         }
-        if(StringUtils.isNotEmpty(courseSearchParam.getGrade())){
-            boolQueryBuilder.filter(QueryBuilders.termQuery("grade",courseSearchParam.getGrade()));
+        if (StringUtils.isNotEmpty(courseSearchParam.getGrade())) {
+            boolQueryBuilder.filter(QueryBuilders.termQuery("grade", courseSearchParam.getGrade()));
         }
         //分页
         Long pageNo = pageParams.getPageNo();
         Long pageSize = pageParams.getPageSize();
-        int start = (int) ((pageNo-1)*pageSize);
+        int start = (int) ((pageNo - 1) * pageSize);
         searchSourceBuilder.from(start);
         searchSourceBuilder.size(Math.toIntExact(pageSize));
         //布尔查询
@@ -111,10 +110,9 @@ public class CourseSearchServiceImpl implements CourseSearchService {
             searchResponse = client.search(searchRequest, RequestOptions.DEFAULT);
         } catch (IOException e) {
             e.printStackTrace();
-            log.error("课程搜索异常：{}",e.getMessage());
-            return new SearchPageResultDto<CourseIndex>(new ArrayList(),0,0,0);
+            log.error("课程搜索异常：{}", e.getMessage());
+            return new SearchPageResultDto<>(new ArrayList<>(), 0, 0, 0);
         }
-
         //结果集处理
         SearchHits hits = searchResponse.getHits();
         SearchHit[] searchHits = hits.getHits();
@@ -122,51 +120,36 @@ public class CourseSearchServiceImpl implements CourseSearchService {
         TotalHits totalHits = hits.getTotalHits();
         //数据列表
         List<CourseIndex> list = new ArrayList<>();
-
         for (SearchHit hit : searchHits) {
-
             String sourceAsString = hit.getSourceAsString();
             CourseIndex courseIndex = JSON.parseObject(sourceAsString, CourseIndex.class);
-
-            //取出source
-            Map<String, Object> sourceAsMap = hit.getSourceAsMap();
-
             //课程id
             Long id = courseIndex.getId();
             //取出名称
             String name = courseIndex.getName();
             //取出高亮字段内容
             Map<String, HighlightField> highlightFields = hit.getHighlightFields();
-            if(highlightFields!=null){
+            if (highlightFields != null) {
                 HighlightField nameField = highlightFields.get("name");
-                if(nameField!=null){
+                if (nameField != null) {
                     Text[] fragments = nameField.getFragments();
-                    StringBuffer stringBuffer = new StringBuffer();
+                    StringBuilder stringBuilder = new StringBuilder();
                     for (Text str : fragments) {
-                        stringBuffer.append(str.string());
+                        stringBuilder.append(str.string());
                     }
-                    name = stringBuffer.toString();
-
+                    name = stringBuilder.toString();
                 }
             }
             courseIndex.setId(id);
             courseIndex.setName(name);
-
             list.add(courseIndex);
-
         }
-        SearchPageResultDto<CourseIndex> pageResult = new SearchPageResultDto<>(list, totalHits.value,pageNo,pageSize);
-
-        //获取聚合结果
-        List<String> mtList= getAggregation(searchResponse.getAggregations(), "mtAgg");
-        List<String> stList = getAggregation(searchResponse.getAggregations(), "stAgg");
-
-        pageResult.setMtList(mtList);
-        pageResult.setStList(stList);
-
+        SearchPageResultDto<CourseIndex> pageResult = new SearchPageResultDto<>(list, totalHits.value, pageNo, pageSize);
+        Aggregations aggregations = searchResponse.getAggregations();
+        pageResult.setMtList(getAggregation(aggregations, "mtAgg"));
+        pageResult.setStList(getAggregation(aggregations, "stAgg"));
         return pageResult;
     }
-
 
     private void buildAggregation(SearchRequest request) {
         request.source().aggregation(AggregationBuilders
@@ -179,20 +162,18 @@ public class CourseSearchServiceImpl implements CourseSearchService {
                 .field("stName")
                 .size(100)
         );
-
     }
 
     private List<String> getAggregation(Aggregations aggregations, String aggName) {
-        // 4.1.根据聚合名称获取聚合结果
+        // 根据聚合名称获取聚合结果
         Terms brandTerms = aggregations.get(aggName);
-        // 4.2.获取buckets
+        // 获取buckets
         List<? extends Terms.Bucket> buckets = brandTerms.getBuckets();
-        // 4.3.遍历
+        // 遍历
         List<String> brandList = new ArrayList<>();
         for (Terms.Bucket bucket : buckets) {
-            // 4.4.获取key
-            String key = bucket.getKeyAsString();
-            brandList.add(key);
+            // 获取key
+            brandList.add(bucket.getKeyAsString());
         }
         return brandList;
     }

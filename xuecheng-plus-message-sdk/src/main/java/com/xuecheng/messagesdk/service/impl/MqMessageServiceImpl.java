@@ -11,12 +11,10 @@ import com.xuecheng.messagesdk.service.MqMessageService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.util.List;
 
 /**
  * 服务实现类
@@ -51,8 +49,10 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
         mqMessage.setBusinessKey3(businessKey3);
         boolean save = mqMessageService.saveOrUpdate(mqMessage);
         if (save) {
-            rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_STATICS_EXCHANGE_NAME,
-                    RabbitMqConfig.COURSE_STATICS_ROUTING_KEY, String.valueOf(id));
+            rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE_NAME,
+                    businessKey1, String.valueOf(id));
+            rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE_NAME,
+                    businessKey2, String.valueOf(id));
             return mqMessage;
         } else {
             return null;

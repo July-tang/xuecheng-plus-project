@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 /**
  * @author July
  */
-@EnableFeignClients(basePackages = {"com.xuecheng.content.feignclient"})
+@EnableFeignClients(basePackages = {"com.xuecheng.content.feign"})
 @EnableSwagger2Doc
 @EnableTransactionManagement
 @SpringBootApplication(scanBasePackages = "com.xuecheng")

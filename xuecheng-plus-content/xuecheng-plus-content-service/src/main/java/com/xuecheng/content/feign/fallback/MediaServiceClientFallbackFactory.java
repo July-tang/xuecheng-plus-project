@@ -1,11 +1,9 @@
-package com.xuecheng.content.feignclient;
+package com.xuecheng.content.feign.fallback;
 
+import com.xuecheng.content.feign.client.MediaServiceClient;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
 
 /**
  * @author july

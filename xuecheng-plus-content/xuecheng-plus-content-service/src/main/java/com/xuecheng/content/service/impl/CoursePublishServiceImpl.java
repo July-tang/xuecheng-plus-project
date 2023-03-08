@@ -1,12 +1,12 @@
 package com.xuecheng.content.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xuecheng.base.enums.DictionaryCode;
 import com.xuecheng.base.exception.CommonError;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.content.config.MultipartSupportConfig;
-import com.xuecheng.content.feignclient.MediaServiceClient;
+import com.xuecheng.content.feign.client.MediaServiceClient;
+import com.xuecheng.content.feign.client.SearchServiceClient;
 import com.xuecheng.content.mapper.CourseBaseMapper;
 import com.xuecheng.content.mapper.CoursePublishMapper;
 import com.xuecheng.content.mapper.CoursePublishPreMapper;
@@ -18,6 +18,7 @@ import com.xuecheng.content.service.*;
 import com.xuecheng.messagesdk.config.RabbitMqConfig;
 import com.xuecheng.messagesdk.model.po.MqMessage;
 import com.xuecheng.messagesdk.service.MqMessageService;
+import com.xuecheng.search.po.CourseIndex;
 import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.annotation.Resource;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.HashMap;
@@ -76,6 +76,9 @@ public class CoursePublishServiceImpl implements CoursePublishService {
 
     @Resource
     MediaServiceClient mediaServiceClient;
+
+    @Resource
+    SearchServiceClient searchServiceClient;
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId) {
@@ -167,7 +170,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
      * @param courseId 课程id
      */
     private void saveCoursePublishMessage(Long courseId) {
-        MqMessage mqMessage = mqMessageService.addMessage(courseId, "course_static", null, null);
+        MqMessage mqMessage = mqMessageService.addMessage(courseId, RabbitMqConfig.COURSE_STATICS, RabbitMqConfig.ADD_INDEX, null);
         if (mqMessage == null){
             XueChengPlusException.cast(CommonError.UNKNOWN_ERROR);
         }
@@ -213,6 +216,17 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         }
     }
 
+    @Override
+    public Boolean saveCourseIndex(Long courseId) {
+        CoursePublish coursePublish = coursePublishMapper.selectById(courseId);
+        CourseIndex courseIndex = new CourseIndex();
+        BeanUtils.copyProperties(coursePublish, courseIndex);
+        if (!searchServiceClient.add(courseIndex)) {
+            XueChengPlusException.cast("添加索引失败");
+        }
+        return true;
+    }
+
     /**
      * 保存课程发布信息
      * @param courseId 课程Id
@@ -243,7 +257,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         String id = new String(msg.getBody());
         long courseId = Long.parseLong(id);
         if (FINISH_STATE.equals(mqMessageService.getStageOne(courseId))){
-            log.debug("当前阶段是静态化课程信息任务已经完成不再处理,任务id:{}", id);
+            log.debug("该课程静态化课程信息任务已经完成不再处理,任务id:{}", id);
             return;
         }
         //生成静态化页面
@@ -254,5 +268,17 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         //上传静态化页面
         uploadCourseHtml(courseId, file);
         mqMessageService.completedStageOne(courseId);
+    }
+
+    @RabbitListener(queues = {RabbitMqConfig.ADD_INDEX_QUEUE_NAME})
+    public void saveCourseIndexMessage(Message msg) {
+        String id = new String(msg.getBody());
+        long courseId = Long.parseLong(id);
+        if (FINISH_STATE.equals(mqMessageService.getStageTwo(courseId))){
+            log.debug("该课程是索引信息已经添加不再处理,任务id:{}", id);
+            return;
+        }
+        saveCourseIndex(courseId);
+        mqMessageService.completedStageTwo(courseId);
     }
 }

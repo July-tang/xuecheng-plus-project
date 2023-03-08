@@ -30,7 +30,8 @@ import java.util.List;
 @Slf4j
 @Service
 public class MediaFileProcessServiceImpl implements MediaFileProcessService {
-
+    private static final String PROCESS_FINISH = "2";
+    private static final String PROCESS_FAIL = "3";
     private static final String SUCCESS = "success";
 
     @Resource
@@ -49,11 +50,6 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
     String ffmpegPath;
 
     @Override
-    public List<MediaProcess> getMediaProcessList(int shardTotal, int shardIndex, int count) {
-        return mediaProcessMapper.selectListByShardIndex(shardTotal, shardIndex, count);
-    }
-
-    @Override
     public void saveProcessFinishStatus(Long taskId, String status, String fileId, String url, String errorMsg) {
         MediaProcess mediaProcess = mediaProcessMapper.selectById(taskId);
         //任务不存在
@@ -63,20 +59,20 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
         LambdaQueryWrapper<MediaProcess> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(MediaProcess::getId, taskId);
         //处理失败
-        if ("3".equals(status)) {
+        if (PROCESS_FAIL.equals(status)) {
             MediaProcess newMediaProcess = new MediaProcess();
-            newMediaProcess.setStatus("3");
+            newMediaProcess.setStatus(PROCESS_FAIL);
             newMediaProcess.setErrormsg(errorMsg);
             mediaProcessMapper.update(mediaProcess, queryWrapper);
             return;
         }
         MediaFiles mediaFiles = mediaFilesMapper.selectById(fileId);
-        if (mediaFiles != null){
+        if (mediaFiles != null) {
             mediaFiles.setUrl(url);
             mediaFilesMapper.updateById(mediaFiles);
         }
         mediaProcess.setUrl(url);
-        mediaProcess.setStatus("2");
+        mediaProcess.setStatus(PROCESS_FINISH);
         mediaProcess.setFinishDate(LocalDateTime.now());
         mediaProcessMapper.updateById(mediaProcess);
 
@@ -89,7 +85,7 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
     }
 
     @RabbitListener(queues = {RabbitMqConfig.VIDEO_PROCESS_QUEUE_NAME})
-    public void videoProcessMessage(Message msg){
+    public void videoProcessMessage(Message msg) {
         File originFile = null;
         File mp4File = null;
         try {
@@ -116,10 +112,10 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
                 log.error("处理视频文件:{},出错:{}", originPath, e.getMessage());
                 throw new RuntimeException(e);
             }
-            if(!SUCCESS.equals(result)) {
+            if (!SUCCESS.equals(result)) {
                 //记录错误信息
                 log.error("处理视频失败,错误信息:{}", result);
-                saveProcessFinishStatus(mediaProcess.getId(),"3",fileId,null, result);
+                saveProcessFinishStatus(mediaProcess.getId(), PROCESS_FAIL, fileId, null, result);
                 throw new RuntimeException(result);
             }
             String objectName = getMp4FilePath(fileId);
@@ -130,7 +126,7 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
                 throw new RuntimeException(e);
             }
             String url = "/" + bucket + "/" + objectName;
-            saveProcessFinishStatus(mediaProcess.getId(),"2",fileId, url,null);
+            saveProcessFinishStatus(mediaProcess.getId(), PROCESS_FINISH, fileId, url, null);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -143,7 +139,7 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
         }
     }
 
-    private String getMp4FilePath(String fileMd5){
-        return fileMd5.charAt(0) + "/" + fileMd5.charAt(1) + "/" + fileMd5 + "/" +fileMd5 + ".mp4";
+    private String getMp4FilePath(String fileMd5) {
+        return fileMd5.charAt(0) + "/" + fileMd5.charAt(1) + "/" + fileMd5 + "/" + fileMd5 + ".mp4";
     }
 }

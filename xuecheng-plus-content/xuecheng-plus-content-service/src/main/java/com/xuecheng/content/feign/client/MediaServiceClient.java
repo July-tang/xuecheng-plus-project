@@ -1,6 +1,7 @@
-package com.xuecheng.content.feignclient;
+package com.xuecheng.content.feign.client;
 
 import com.xuecheng.content.config.MultipartSupportConfig;
+import com.xuecheng.content.feign.fallback.MediaServiceClientFallbackFactory;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -8,10 +9,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-
 /**
- * @description 媒资管理服务远程接口
+ * 媒资管理服务远程接口
+ *
  * @author july
  */
 @FeignClient(value = "media-api", configuration = MultipartSupportConfig.class, fallbackFactory = MediaServiceClientFallbackFactory.class)

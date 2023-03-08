@@ -304,7 +304,7 @@ public class MediaFileServiceImpl implements MediaFileService {
                 mediaProcess.setFilePath(absolutePath);
                 mediaProcessMapper.insert(mediaProcess);
                 rabbitTemplate.convertAndSend(RabbitMqConfig.VIDEO_PROCESS_EXCHANGE_NAME,
-                        RabbitMqConfig.VIDEO_PROCESS_ROUTING_KEY,
+                        RabbitMqConfig.VIDEO_PROCESS,
                         String.valueOf(mediaProcess.getId()));
             }
         }

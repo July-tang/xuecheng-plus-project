@@ -26,7 +26,7 @@ public class CourseSearchController {
 
     @ApiOperation("课程搜索列表")
     @GetMapping("/list")
-    public SearchPageResultDto<CourseIndex> list(PageParams pageParams, SearchCourseParamDto searchCourseParamDto) {
+    public SearchPageResultDto<CourseIndex> list(PageParams pageParams, @RequestBody SearchCourseParamDto searchCourseParamDto) {
         return courseSearchService.queryCoursePubIndex(pageParams, searchCourseParamDto);
     }
 }

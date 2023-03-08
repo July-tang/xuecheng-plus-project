@@ -16,6 +16,7 @@ import javax.annotation.Resource;
 
 /**
  * 课程索引接口
+ *
  * @author july
  */
 @Api(value = "课程信息索引接口", tags = "课程信息索引接口")
@@ -30,18 +31,15 @@ public class CourseIndexController {
     IndexService indexService;
 
     @ApiOperation("添加课程索引")
-    @PostMapping("course")
+    @PostMapping("/course")
     public Boolean add(@RequestBody CourseIndex courseIndex) {
-
         Long id = courseIndex.getId();
         if (id == null) {
             XueChengPlusException.cast("课程id为空");
         }
-        Boolean result = indexService.addCourseIndex(courseIndexStore, String.valueOf(id), courseIndex);
-        if (!result) {
+        if (!indexService.addCourseIndex(courseIndexStore, String.valueOf(id), courseIndex)) {
             XueChengPlusException.cast("添加课程索引失败");
         }
-        return result;
-
+        return true;
     }
 }

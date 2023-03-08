@@ -16,13 +16,17 @@ public class RabbitMqConfig {
 
     public static final String VIDEO_PROCESS_QUEUE_NAME = "video_process_queue";
 
-    public static final String VIDEO_PROCESS_ROUTING_KEY = "video_process_routingKey";
+    public static final String VIDEO_PROCESS = "video_process";
 
-    public static final String COURSE_STATICS_EXCHANGE_NAME = "course_statics_exchange";
+    public static final String COURSE_PUBLISH_EXCHANGE_NAME = "course_publish_exchange";
 
     public static final String COURSE_STATICS_QUEUE_NAME = "course_statics_queue";
 
-    public static final String COURSE_STATICS_ROUTING_KEY = "course_statics_routingKey";
+    public static final String COURSE_STATICS = "course_statics";
+
+    public static final String ADD_INDEX_QUEUE_NAME = "add_index_queue";
+
+    public static final String ADD_INDEX = "add_index";
 
     @Bean
     public Queue videoProcessQueue() {
@@ -37,7 +41,7 @@ public class RabbitMqConfig {
     @Bean
     public Binding videoProcessBinding(Queue videoProcessQueue,
                                        DirectExchange videoProcessExchange) {
-        return BindingBuilder.bind(videoProcessQueue).to(videoProcessExchange).with(VIDEO_PROCESS_ROUTING_KEY);
+        return BindingBuilder.bind(videoProcessQueue).to(videoProcessExchange).with(VIDEO_PROCESS);
     }
 
     @Bean
@@ -46,13 +50,24 @@ public class RabbitMqConfig {
     }
 
     @Bean
-    public DirectExchange courseStaticsExchange() {
-        return ExchangeBuilder.directExchange(COURSE_STATICS_EXCHANGE_NAME).durable(true).build();
+    public DirectExchange coursePublishExchange() {
+        return ExchangeBuilder.directExchange(COURSE_PUBLISH_EXCHANGE_NAME).durable(true).build();
     }
 
     @Bean
     public Binding courseStaticsBinding(Queue courseStaticsQueue,
-                                       DirectExchange courseStaticsExchange) {
-        return BindingBuilder.bind(courseStaticsQueue).to(courseStaticsExchange).with(COURSE_STATICS_ROUTING_KEY);
+                                       DirectExchange coursePublishExchange) {
+        return BindingBuilder.bind(courseStaticsQueue).to(coursePublishExchange).with(COURSE_STATICS);
+    }
+
+    @Bean
+    public Queue addIndexQueue() {
+        return QueueBuilder.durable(ADD_INDEX_QUEUE_NAME).build();
+    }
+
+    @Bean
+    public Binding addIndexBinding(Queue addIndexQueue,
+                                        DirectExchange coursePublishExchange) {
+        return BindingBuilder.bind(addIndexQueue).to(coursePublishExchange).with(ADD_INDEX);
     }
 }
