@@ -1,0 +1,16 @@
+package com.xuecheng.checkcode;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+
+/**
+ * @author july
+ */
+@SpringBootApplication
+public class CheckcodeApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(CheckcodeApplication.class, args);
+    }
+
+}
