@@ -2,6 +2,7 @@ package com.xuecheng.content.api;
 
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
+import com.xuecheng.base.utils.SecurityUtil;
 import com.xuecheng.content.model.dto.AddCourseDto;
 import com.xuecheng.content.model.dto.CourseBaseInfoDto;
 import com.xuecheng.content.model.dto.EditCourseDto;
@@ -58,6 +59,6 @@ public class CourseBaseInfoController {
     @DeleteMapping("/{courseId}")
     public void deleteCourseBase(@PathVariable Long courseId) {
         Long companyId = 37L;
-        courseBaseInfoService.deleteCourseBase(37L, courseId);
+        courseBaseInfoService.deleteCourseBase(companyId, courseId);
     }
 }

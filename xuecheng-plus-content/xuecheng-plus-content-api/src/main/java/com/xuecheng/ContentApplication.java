@@ -13,10 +13,10 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EnableSwagger2Doc
 @EnableTransactionManagement
 @SpringBootApplication(scanBasePackages = "com.xuecheng")
-public class ContentApiApplication {
+public class ContentApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ContentApiApplication.class, args);
+        SpringApplication.run(ContentApplication.class, args);
     }
 
 }

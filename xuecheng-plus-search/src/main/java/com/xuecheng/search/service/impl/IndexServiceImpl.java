@@ -15,6 +15,7 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -29,13 +30,16 @@ import java.io.IOException;
 @Service
 public class IndexServiceImpl implements IndexService {
 
+    @Value("${elasticsearch.course.index}")
+    private String courseIndexStore;
+
     @Resource
     RestHighLevelClient client;
 
     @Override
-    public Boolean addCourseIndex(String indexName, String id, Object object) {
+    public Boolean addCourseIndex(String id, Object object) {
         String jsonString = JSON.toJSONString(object);
-        IndexRequest indexRequest = new IndexRequest(indexName).id(id);
+        IndexRequest indexRequest = new IndexRequest(courseIndexStore).id(id);
         //指定索引文档内容
         indexRequest.source(jsonString, XContentType.JSON);
         //索引响应对象
@@ -52,9 +56,9 @@ public class IndexServiceImpl implements IndexService {
     }
 
     @Override
-    public Boolean updateCourseIndex(String indexName, String id, Object object) {
+    public Boolean updateCourseIndex(String id, Object object) {
         String jsonString = JSON.toJSONString(object);
-        UpdateRequest updateRequest = new UpdateRequest(indexName, id);
+        UpdateRequest updateRequest = new UpdateRequest(courseIndexStore, id);
         updateRequest.doc(jsonString, XContentType.JSON);
         UpdateResponse updateResponse = null;
         try {
@@ -70,9 +74,9 @@ public class IndexServiceImpl implements IndexService {
     }
 
     @Override
-    public Boolean deleteCourseIndex(String indexName, String id) {
+    public Boolean deleteCourseIndex(String id) {
         //删除索引请求对象
-        DeleteRequest deleteRequest = new DeleteRequest(indexName, id);
+        DeleteRequest deleteRequest = new DeleteRequest(courseIndexStore, id);
         //响应对象
         DeleteResponse deleteResponse = null;
         try {
