@@ -2,12 +2,15 @@ package com.xuecheng.auth.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import javax.annotation.Resource;
 
 /**
  * 安全管理配置
@@ -17,6 +20,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(securedEnabled = true, prePostEnabled = true)
 public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
+
+    @Resource
+    DaoAuthenticationProviderCustom daoAuthenticationProviderCustom;
 
     @Bean
     @Override
@@ -36,16 +42,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
      */
     @Override
     protected void configure(HttpSecurity http) throws Exception {
-        http
-                .authorizeRequests()
-                .antMatchers("/r/**").authenticated()//访问/r开始的请求需要认证通过
-                .anyRequest().permitAll()//其它请求全部放行
+        http.authorizeRequests()
+                .antMatchers("/r/**").authenticated()
+                .anyRequest().permitAll()
                 .and()
-                .formLogin().successForwardUrl("/login-success");//登录成功跳转到/login-success
-
-        http.logout().logoutUrl("/logout");//退出地址
-
+                .formLogin().successForwardUrl("/login-success");
+        http.logout().logoutUrl("/logout");
     }
 
-
+    @Override
+    protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        auth.authenticationProvider(daoAuthenticationProviderCustom);
+    }
 }
