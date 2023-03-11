@@ -41,7 +41,7 @@ public class PicCheckCodeServiceImpl extends AbstractCheckCodeService implements
     }
 
 
-    @Resource(name="MemoryCheckCodeStore")
+    @Resource(name="RedisCheckCodeStore")
     @Override
     public void setCheckCodeStore(CheckCodeStore checkCodeStore) {
         this.checkCodeStore = checkCodeStore;
