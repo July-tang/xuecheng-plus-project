@@ -1,33 +1,22 @@
 package com.xuecheng.checkcode.service.impl;
 
-import com.google.code.kaptcha.impl.DefaultKaptcha;
-import com.xuecheng.base.utils.EncryptUtil;
 import com.xuecheng.checkcode.model.CheckCodeParamsDto;
 import com.xuecheng.checkcode.model.CheckCodeResultDto;
 import com.xuecheng.checkcode.service.AbstractCheckCodeService;
 import com.xuecheng.checkcode.service.CheckCodeService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import sun.misc.BASE64Encoder;
 
 import javax.annotation.Resource;
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 
 /**
- * 图片验证码生成器
- *
  * @author july
  */
-@Service("PicCheckCodeService")
-public class PicCheckCodeServiceImpl extends AbstractCheckCodeService implements CheckCodeService {
+@Slf4j
+@Service("NumCheckCodeService")
+public class NumCheckCodeServiceImpl extends AbstractCheckCodeService implements CheckCodeService {
 
-    @Resource
-    private DefaultKaptcha kaptcha;
-
-    @Resource(name="NumberLetterCheckCodeGenerator")
+    @Resource(name="NumberCheckCodeGenerator")
     @Override
     public void setCheckCodeGenerator(CheckCodeGenerator checkCodeGenerator) {
         this.checkCodeGenerator = checkCodeGenerator;
@@ -39,38 +28,21 @@ public class PicCheckCodeServiceImpl extends AbstractCheckCodeService implements
         this.keyGenerator = keyGenerator;
     }
 
-
     @Resource(name="RedisCheckCodeStore")
     @Override
     public void setCheckCodeStore(CheckCodeStore checkCodeStore) {
         this.checkCodeStore = checkCodeStore;
     }
 
-
     @Override
     public CheckCodeResultDto generate(CheckCodeParamsDto checkCodeParamsDto) {
-        GenerateResult generate = generate(checkCodeParamsDto, 4, "checkcode:", 60);
+        GenerateResult generate = generate(checkCodeParamsDto, 4, checkCodeParamsDto.getParam1(), 60);
         String key = generate.getKey();
         String code = generate.getCode();
-        String pic = createPic(code);
         CheckCodeResultDto checkCodeResultDto = new CheckCodeResultDto();
-        checkCodeResultDto.setAliasing(pic);
+        checkCodeResultDto.setAliasing(code);
         checkCodeResultDto.setKey(key);
         return checkCodeResultDto;
-
-    }
-
-    private String createPic(String code) {
-        // 生成图片验证码
-        BufferedImage image = kaptcha.createImage(code);
-        String imgBase64Encoder = null;
-        try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
-            ImageIO.write(image, "png", outputStream);
-            imgBase64Encoder = "data:image/png;base64," + EncryptUtil.encodeBase64(outputStream.toByteArray());
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return imgBase64Encoder;
     }
 
     @Override

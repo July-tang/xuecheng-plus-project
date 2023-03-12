@@ -31,9 +31,6 @@ import java.util.List;
 public class UserServiceImpl implements UserDetailsService {
 
     @Resource
-    XcUserMapper xcUserMapper;
-
-    @Resource
     XcMenuMapper xcMenuMapper;
 
     @Resource

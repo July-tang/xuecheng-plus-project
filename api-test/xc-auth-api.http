@@ -6,3 +6,21 @@ POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&gr
 
 ### 申请图片验证码
 POST {{checkcode_host}}/checkcode/pic
+
+### 申请手机验证码
+POST {{checkcode_host}}/checkcode/phone?param1=123
+
+### 注册用户
+POST {{auth_host}}/auth/register
+Content-Type: application/json
+
+{
+  "cellphone": "123",
+  "checkcode": "9109",
+  "checkcodekey": "12303f83ee3798749e49c334616feaf8769",
+  "confirmpwd": "123",
+  "email": "",
+  "nickname": "july",
+  "password": "123",
+  "username": "july"
+}

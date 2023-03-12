@@ -18,6 +18,7 @@ import javax.annotation.Resource;
 
 /**
  * 服务实现类
+ *
  * @author july
  */
 @Slf4j
@@ -66,11 +67,11 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
         //完成任务
         mqMessage.setState(FINISH_STATE);
         int update = mqMessageMapper.update(mqMessage, new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId, id));
-        if (update > 0){
+        if (update > 0) {
             mqMessage = mqMessageMapper.selectById(id);
             //添加到历史表
             MqMessageHistory mqMessageHistory = new MqMessageHistory();
-            BeanUtils.copyProperties(mqMessage,mqMessageHistory);
+            BeanUtils.copyProperties(mqMessage, mqMessageHistory);
             mqMessageHistoryMapper.insert(mqMessageHistory);
             //删除消息表
             mqMessageMapper.deleteById(id);
@@ -86,7 +87,7 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
             MqMessage mqMessage = new MqMessage();
             //完成阶段1任务
             mqMessage.setStageState1(FINISH_STATE);
-            mqMessageMapper.update(mqMessage,new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId,id));
+            mqMessageMapper.update(mqMessage, new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId, id));
         }
         return 1;
     }
@@ -96,7 +97,7 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
         MqMessage mqMessage = new MqMessage();
         //完成阶段2任务
         mqMessage.setStageState2(FINISH_STATE);
-        return mqMessageMapper.update(mqMessage,new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId,id));
+        return mqMessageMapper.update(mqMessage, new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId, id));
     }
 
     @Override
@@ -104,7 +105,7 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
         MqMessage mqMessage = new MqMessage();
         //完成阶段3任务
         mqMessage.setStageState3(FINISH_STATE);
-        return mqMessageMapper.update(mqMessage,new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId,id));
+        return mqMessageMapper.update(mqMessage, new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId, id));
     }
 
     @Override
@@ -112,7 +113,7 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
         MqMessage mqMessage = new MqMessage();
         //完成阶段4任务
         mqMessage.setStageState4(FINISH_STATE);
-        return mqMessageMapper.update(mqMessage,new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId,id));
+        return mqMessageMapper.update(mqMessage, new LambdaQueryWrapper<MqMessage>().eq(MqMessage::getId, id));
     }
 
     @Override

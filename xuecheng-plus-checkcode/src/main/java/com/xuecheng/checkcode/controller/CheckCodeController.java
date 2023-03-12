@@ -23,11 +23,19 @@ public class CheckCodeController {
     @Resource(name = "PicCheckCodeService")
     private CheckCodeService picCheckCodeService;
 
+    @Resource(name = "NumCheckCodeService")
+    private CheckCodeService numCheckCodeService;
 
-    @ApiOperation(value = "生成验证信息", notes = "生成验证信息")
+    @ApiOperation(value = "生成图片验证码", notes = "生成图片验证码")
     @PostMapping(value = "/pic")
     public CheckCodeResultDto generatePicCheckCode(CheckCodeParamsDto checkCodeParamsDto) {
         return picCheckCodeService.generate(checkCodeParamsDto);
+    }
+
+    @ApiOperation(value = "生成数字验证码", notes = "生成数字验证码")
+    @PostMapping("/phone")
+    public CheckCodeResultDto generateNumCheckCode(CheckCodeParamsDto checkCodeParamsDto) {
+        return numCheckCodeService.generate(checkCodeParamsDto);
     }
 
     @ApiOperation(value = "校验", notes = "校验")
