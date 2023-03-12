@@ -5,6 +5,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author july
@@ -17,7 +18,7 @@ public class RedisCheckCodeStore implements CheckCodeService.CheckCodeStore {
 
     @Override
     public void set(String key, String value, Integer expire) {
-        redisTemplate.opsForValue().set(key, value, expire);
+        redisTemplate.opsForValue().set(key, value, expire, TimeUnit.SECONDS);
     }
 
     @Override
