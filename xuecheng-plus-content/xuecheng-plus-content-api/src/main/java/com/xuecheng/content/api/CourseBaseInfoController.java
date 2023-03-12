@@ -8,30 +8,36 @@ import com.xuecheng.content.model.dto.EditCourseDto;
 import com.xuecheng.content.model.dto.QueryCourseParamsDto;
 import com.xuecheng.content.model.po.CourseBase;
 import com.xuecheng.content.service.CourseBaseInfoService;
+import com.xuecheng.content.util.UserUtil;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+
 /**
- * @description 课程信息编辑接口
+ * 课程信息编辑接口
+ *
  * @author July
  */
 @Slf4j
 @RestController
 @RequestMapping("/course")
-@Api(value = "课程管理接口",tags = "课程管理接口")
+@Api(value = "课程管理接口", tags = "课程管理接口")
 public class CourseBaseInfoController {
 
     @Resource
     CourseBaseInfoService courseBaseInfoService;
 
     @ApiOperation("课程列表查询接口")
+    @PreAuthorize("hasAnyAuthority('xc_teachmanager_course_list')")
     @PostMapping("/list")
     public PageResult<CourseBase> list(PageParams params, @RequestBody QueryCourseParamsDto queryCourseParamsDto) {
-        return courseBaseInfoService.queryCourseBaseList(params, queryCourseParamsDto);
+        Long companyId = UserUtil.getCompanyId();
+        return courseBaseInfoService.queryCourseBaseList(companyId, params, queryCourseParamsDto);
     }
 
     @ApiOperation("课程信息新增接口")

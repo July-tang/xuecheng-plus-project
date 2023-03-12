@@ -30,8 +30,7 @@ public class LoginController {
 
     @RequestMapping("/user/{id}")
     public XcUser getuser(@PathVariable("id") String id) {
-        XcUser xcUser = userMapper.selectById(id);
-        return xcUser;
+        return userMapper.selectById(id);
     }
 
     @RequestMapping("/r/r1")

@@ -21,6 +21,8 @@ import java.util.List;
 @ResponseBody
 public class GlobalExceptionHandler {
 
+    private static final String ACCESS_DENIED = "不允许访问";
+
     @ExceptionHandler(XueChengPlusException.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public RestErrorResponse doCustomException(XueChengPlusException exception) {
@@ -44,8 +46,9 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public RestErrorResponse doException(Exception exception) {
         log.error("系统异常：{}", exception.getMessage());
-        return new RestErrorResponse(exception.getMessage());
+        if(ACCESS_DENIED.equals(exception.getMessage())){
+            return new RestErrorResponse("没有操作此功能的权限");
+        }
+        return new RestErrorResponse(CommonError.UNKNOWN_ERROR.getErrMessage());
     }
-
-
 }

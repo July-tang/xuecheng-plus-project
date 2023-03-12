@@ -39,6 +39,7 @@ public class TokenConfig {
     public TokenStore tokenStore() {
         return new JwtTokenStore(accessTokenConverter());
     }
+
     /**
      * 令牌管理服务
      *

@@ -15,6 +15,12 @@ import java.util.List;
  * @author july
  */
 public interface XcMenuMapper extends BaseMapper<XcMenu> {
+
+    /**
+     * 查询用户权限
+     * @param userId 用户id
+     * @return List<XcMenu> 用户权限
+     */
     @Select("SELECT	* FROM xc_menu WHERE id IN (SELECT menu_id FROM xc_permission WHERE role_id IN ( SELECT role_id FROM xc_user_role WHERE user_id = #{userId} ))")
     List<XcMenu> selectPermissionByUserId(@Param("userId") String userId);
 }

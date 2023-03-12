@@ -48,7 +48,7 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
     TeachplanMapper teachplanMapper;
 
     @Override
-    public PageResult<CourseBase> queryCourseBaseList(PageParams pageParams, QueryCourseParamsDto queryCourseParamsDto) {
+    public PageResult<CourseBase> queryCourseBaseList(Long companyId, PageParams pageParams, QueryCourseParamsDto queryCourseParamsDto) {
         LambdaQueryWrapper<CourseBase> queryWrapper = new LambdaQueryWrapper<>();
         // 构建查询条件
         String courseName = queryCourseParamsDto.getCourseName();
@@ -57,6 +57,7 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         queryWrapper.like(StringUtils.isNotEmpty(courseName), CourseBase::getName, courseName);
         queryWrapper.like(StringUtils.isNotEmpty(auditStatus), CourseBase::getAuditStatus, auditStatus);
         queryWrapper.like(StringUtils.isNotEmpty(publishStatus), CourseBase::getStatus, publishStatus);
+        queryWrapper.eq(CourseBase::getCompanyId, companyId);
 
         //构建分页对象
         Page<CourseBase> page = new Page<>(pageParams.getPageNo(), pageParams.getPageSize());
