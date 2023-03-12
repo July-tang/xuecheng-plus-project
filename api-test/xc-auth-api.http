@@ -2,13 +2,26 @@
 POST {{auth_host}}/auth/oauth/check_token?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhdWQiOlsieHVlY2hlbmctcGx1cyJdLCJ1c2VyX25hbWUiOiJ7XCJjb21wYW55SWRcIjpcIjEyMzIxNDE0MjVcIixcImNyZWF0ZVRpbWVcIjpcIjIwMjItMDktMjhUMDg6MzI6MDNcIixcImlkXCI6XCI1MlwiLFwibmFtZVwiOlwiTeiAgeW4iFwiLFwicGVybWlzc2lvbnNcIjpbXCJ4Y190ZWFjaG1hbmFnZXJcIixcInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VcIixcInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VfYWRkXCIsXCJ4Y190ZWFjaG1hbmFnZXJfY291cnNlX2RlbFwiLFwieGNfdGVhY2htYW5hZ2VyX2NvdXJzZV9tYXJrZXRcIixcInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VfYmFzZVwiLFwieGNfdGVhY2htYW5hZ2VyX2NvdXJzZV9wbGFuXCIsXCJ4Y190ZWFjaG1hbmFnZXJfY291cnNlX3B1Ymxpc2hcIixcInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VfbGlzdFwiLFwiY291cnNlX2ZpbmRfbGlzdFwiXSxcInNleFwiOlwiMVwiLFwic3RhdHVzXCI6XCJcIixcInVzZXJuYW1lXCI6XCJ0MVwiLFwidXR5cGVcIjpcIjEwMTAwMlwifSIsInNjb3BlIjpbImFsbCJdLCJleHAiOjE2Nzg2MTI4MDQsImF1dGhvcml0aWVzIjpbInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VfYmFzZSIsInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VfZGVsIiwieGNfdGVhY2htYW5hZ2VyX2NvdXJzZV9saXN0IiwieGNfdGVhY2htYW5hZ2VyX2NvdXJzZV9wbGFuIiwieGNfdGVhY2htYW5hZ2VyX2NvdXJzZSIsImNvdXJzZV9maW5kX2xpc3QiLCJ4Y190ZWFjaG1hbmFnZXIiLCJ4Y190ZWFjaG1hbmFnZXJfY291cnNlX21hcmtldCIsInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VfcHVibGlzaCIsInhjX3RlYWNobWFuYWdlcl9jb3Vyc2VfYWRkIl0sImp0aSI6Ijk0YTJlNDM4LTk4YjctNDgxNS05YThiLWRlNmFlODg1N2YyMiIsImNsaWVudF9pZCI6IlhjV2ViQXBwIn0.WszXh-xZYOnNd1e3BkzxoC49lX9dxFuWXwhoTyuBlVc
 
 ### jwt密码模式
-POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username={"username":"stu1","authType":"password", "password":"111111"}
+POST {{auth_host}}/auth/oauth/token?client_id=XcWebApp&client_secret=XcWebApp&grant_type=password&username={"username":"itcast","authType":"password", "password":"111111"}
 
 ### 申请图片验证码
 POST {{checkcode_host}}/checkcode/pic
 
 ### 申请手机验证码
-POST {{checkcode_host}}/checkcode/phone?param1=123
+POST {{checkcode_host}}/checkcode/phone?param1=12345
+
+### 修改密码
+POST {{auth_host}}/auth/findpassword
+Content-Type: application/json
+
+{
+  "cellphone": "12345",
+  "checkcode": "9926",
+  "checkcodekey": "12345c78f6e4d342a4a7ea18b66c1317e66d0",
+  "confirmpwd": "111111",
+  "email": "",
+  "password": "111111"
+}
 
 ### 注册用户
 POST {{auth_host}}/auth/register

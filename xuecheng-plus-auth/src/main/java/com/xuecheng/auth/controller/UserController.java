@@ -1,5 +1,6 @@
 package com.xuecheng.auth.controller;
 
+import com.xuecheng.ucenter.model.dto.FindPasswordDto;
 import com.xuecheng.ucenter.model.dto.RegisterUserDto;
 import com.xuecheng.ucenter.model.po.XcUser;
 import com.xuecheng.ucenter.service.XcUserService;
@@ -27,5 +28,11 @@ public class UserController {
     @PostMapping("/register")
     public XcUser register(@RequestBody RegisterUserDto registerUserDto) {
         return xcUserService.register(registerUserDto);
+    }
+
+    @PostMapping("/findpassword")
+    @ResponseBody
+    public XcUser findPassword(@RequestBody FindPasswordDto passwordDto) {
+        return xcUserService.updatePassword(passwordDto);
     }
 }

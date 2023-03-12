@@ -42,7 +42,7 @@ public class RegisterUserDto {
     /**
      * 邮箱
      */
-    @ApiModelProperty(value = "邮箱", required = true)
+    @ApiModelProperty(value = "邮箱")
     private String email;
     /**
      * 昵称
