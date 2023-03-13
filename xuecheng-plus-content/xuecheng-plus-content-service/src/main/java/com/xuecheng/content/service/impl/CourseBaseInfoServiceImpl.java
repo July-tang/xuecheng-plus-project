@@ -81,6 +81,9 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
         //封装课程营销信息
         CourseMarket courseMarket = new CourseMarket();
         BeanUtils.copyProperties(addCourseDto, courseMarket);
+        if (courseMarket.getValidDays() == null) {
+            courseMarket.setValidDays(365);
+        }
         courseMarket.setId(courseId);
         //保存课程营销信息
         int marketInsert = saveCourseMarket(courseMarket);

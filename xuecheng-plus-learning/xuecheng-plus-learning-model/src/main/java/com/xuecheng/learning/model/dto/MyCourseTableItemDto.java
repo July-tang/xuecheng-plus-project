@@ -1,0 +1,41 @@
+package com.xuecheng.learning.model.dto;
+
+import com.xuecheng.learning.model.po.XcCourseTables;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.time.LocalDateTime;
+
+/**
+ * 课程表学习查询条件dto
+ *
+ * @author july
+ */
+@EqualsAndHashCode(callSuper = true)
+@Data
+@ToString
+public class MyCourseTableItemDto extends XcCourseTables {
+
+    /**
+     * 最近学习时间
+     */
+    private LocalDateTime learnDate;
+
+    /**
+     * 学习时长
+     */
+    private Long learnLength;
+
+    /**
+     * 章节id
+     */
+    private Long teachplanId;
+
+    /**
+     * 章节名称
+     */
+    private String teachplanName;
+
+
+}

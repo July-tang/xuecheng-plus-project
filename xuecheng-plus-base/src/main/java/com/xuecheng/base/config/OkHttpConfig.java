@@ -1,4 +1,4 @@
-package com.xuecheng.auth.config;
+package com.xuecheng.base.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
