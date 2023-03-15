@@ -11,6 +11,7 @@ import com.xuecheng.orders.mapper.XcOrdersMapper;
 import com.xuecheng.orders.mapper.XcPayRecordMapper;
 import com.xuecheng.orders.model.dto.AddOrderDto;
 import com.xuecheng.orders.model.dto.PayRecordDto;
+import com.xuecheng.orders.model.dto.PayStatusDto;
 import com.xuecheng.orders.model.po.XcOrders;
 import com.xuecheng.orders.model.po.XcOrdersGoods;
 import com.xuecheng.orders.model.po.XcPayRecord;
@@ -66,6 +67,11 @@ public class OrderServiceImpl implements OrderService {
         BeanUtils.copyProperties(payRecordDto, payRecord);
         payRecordDto.setQrcode(qrCode);
         return payRecordDto;
+    }
+
+    @Override
+    public XcPayRecord getPayRecordByPayNo(String payNo) {
+        return payRecordMapper.selectOne(new LambdaQueryWrapper<XcPayRecord>().eq(XcPayRecord::getPayNo, payNo));
     }
 
     /**
@@ -133,6 +139,42 @@ public class OrderServiceImpl implements OrderService {
         return payRecord;
     }
 
+    /**
+     * 保存alipay支付结果
+     *
+     * @param payStatusDto dto
+     */
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveAliPayStatus(PayStatusDto payStatusDto) {
+        //支付宝返回结果为支付成功才需要保存
+        if (!"TRADE_SUCCESS".equals(payStatusDto.getTrade_status())) {
+            return;
+        }
+        String payNo = payStatusDto.getOut_trade_no();
+        XcPayRecord payRecord = proxy.getPayRecordByPayNo(payNo);
+        if (payRecord == null) {
+            XueChengPlusException.cast("系统出错，支付记录不存在！");
+        }
+        if (!StatusCodeEnum.RECORD_UNPAID.getCode().equals(payRecord.getStatus())) {
+            XueChengPlusException.cast("该订单已被支付！");
+        }
+        payRecord.setStatus(StatusCodeEnum.RECORD_PAID.getCode());
+        payRecord.setOutPayChannel("Alipay");
+        payRecord.setPaySuccessTime(LocalDateTime.now());
+        if (payRecordMapper.updateById(payRecord) <= 0) {
+            XueChengPlusException.cast("支付记录更新失败！");
+        }
+        Long orderId = payRecord.getOrderId();
+        XcOrders order = ordersMapper.selectById(orderId);
+        if (order == null) {
+            XueChengPlusException.cast("根据交易记录找不到订单!");
+        }
+        order.setStatus(StatusCodeEnum.ORDER_PAID.getCode());
+        if (ordersMapper.updateById(order) <= 0) {
+            XueChengPlusException.cast("订单结果更新失败！");
+        }
+    }
 
     /**
      * 根据业务id查询订单
