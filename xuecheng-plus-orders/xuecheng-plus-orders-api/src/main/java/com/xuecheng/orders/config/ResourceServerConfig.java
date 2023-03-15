@@ -1,4 +1,4 @@
-package com.xuecheng.learning.config;
+package com.xuecheng.orders.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -37,7 +37,6 @@ public class ResourceServerConfig extends ResourceServerConfigurerAdapter {
     public void configure(HttpSecurity http) throws Exception {
         http.csrf().disable()
                 .authorizeRequests()
-                .antMatchers("/learning/**").authenticated()
                 .antMatchers("/r/**").permitAll()
                 .anyRequest().permitAll()
         ;

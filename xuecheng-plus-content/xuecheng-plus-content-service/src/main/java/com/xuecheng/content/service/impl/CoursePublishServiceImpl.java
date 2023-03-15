@@ -1,7 +1,7 @@
 package com.xuecheng.content.service.impl;
 
 import com.alibaba.fastjson.JSON;
-import com.xuecheng.base.enums.DictionaryCode;
+import com.xuecheng.base.enums.StatusCodeEnum;
 import com.xuecheng.base.exception.CommonError;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.content.config.MultipartSupportConfig;
@@ -92,10 +92,10 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     public void commitAudit(Long companyId, Long courseId) {
         CourseBaseInfoDto courseBaseInfo = courseBaseInfoService.getCourseBaseInfo(courseId);
         String auditStatus = courseBaseInfo.getAuditStatus();
-        if (DictionaryCode.AUDIT_PASS.equals(auditStatus)) {
+        if (StatusCodeEnum.AUDIT_PASS.getCode().equals(auditStatus)) {
             XueChengPlusException.cast("该课程审核已通过！");
         }
-        if (DictionaryCode.AUDIT_SUBMIT.equals(auditStatus)) {
+        if (StatusCodeEnum.AUDIT_SUBMIT.getCode().equals(auditStatus)) {
             XueChengPlusException.cast("已提交审核，请等待审核完成。");
         }
         if (!companyId.equals(courseBaseInfo.getCompanyId())) {
@@ -122,7 +122,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         }
         coursePublishPre.setTeachers(JSON.toJSONString(courseTeachers));
         //设置预发布记录状态, 已提交
-        coursePublishPre.setStatus(DictionaryCode.AUDIT_SUBMIT);
+        coursePublishPre.setStatus(StatusCodeEnum.AUDIT_SUBMIT.getCode());
         coursePublishPre.setCompanyId(companyId);
         coursePublishPre.setCreateDate(LocalDateTime.now());
         if (coursePublishPreMapper.selectById(courseId) == null){
@@ -134,7 +134,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         }
         //更新课程基本信息表
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
-        courseBase.setAuditStatus(DictionaryCode.AUDIT_SUBMIT);
+        courseBase.setAuditStatus(StatusCodeEnum.AUDIT_SUBMIT.getCode());
         courseBaseMapper.updateById(courseBase);
     }
 
@@ -150,7 +150,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
             XueChengPlusException.cast("不允许提交其它机构的课程。");
         }
         //审核通过方可发布
-        if (!DictionaryCode.AUDIT_PASS.equals(coursePublishPre.getStatus())){
+        if (!StatusCodeEnum.AUDIT_PASS.getCode().equals(coursePublishPre.getStatus())){
             XueChengPlusException.cast("操作失败，需要课程审核通过后才可发布。");
         }
 
@@ -243,7 +243,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         }
         CoursePublish coursePublish = new CoursePublish();
         BeanUtils.copyProperties(coursePublishPre, coursePublish);
-        coursePublish.setStatus(DictionaryCode.COURSE_SUBMIT);
+        coursePublish.setStatus(StatusCodeEnum.COURSE_SUBMIT.getCode());
 
         if (coursePublishMapper.selectById(courseId) == null) {
             coursePublishMapper.insert(coursePublish);
@@ -252,7 +252,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         }
         //更新课程基本表的发布状态
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
-        courseBase.setStatus(DictionaryCode.COURSE_SUBMIT);
+        courseBase.setStatus(StatusCodeEnum.COURSE_SUBMIT.getCode());
         courseBaseMapper.updateById(courseBase);
     }
 

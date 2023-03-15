@@ -5,7 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.j256.simplemagic.ContentInfo;
 import com.j256.simplemagic.ContentInfoUtil;
-import com.xuecheng.base.enums.DictionaryCode;
+import com.xuecheng.base.enums.StatusCodeEnum;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.model.PageParams;
 import com.xuecheng.base.model.PageResult;
@@ -293,7 +293,7 @@ public class MediaFileServiceImpl implements MediaFileService {
             mediaFiles.setFilePath(objectName);
             mediaFiles.setCreateDate(LocalDateTime.now());
             mediaFiles.setStatus("1");
-            mediaFiles.setAuditStatus(DictionaryCode.AUDIT_SUBMIT);
+            mediaFiles.setAuditStatus(StatusCodeEnum.AUDIT_SUBMIT.getCode());
             if (mediaFilesMapper.insert(mediaFiles) < 0) {
                 XueChengPlusException.cast("保存文件信息失败");
             }

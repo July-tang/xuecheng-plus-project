@@ -1,7 +1,7 @@
 package com.xuecheng.learning.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.xuecheng.base.enums.DictionaryCode;
+import com.xuecheng.base.enums.StatusCodeEnum;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.content.model.po.CoursePublish;
 import com.xuecheng.learning.feign.ContentServiceClient;
@@ -46,11 +46,11 @@ public class CourseTablesServiceImpl implements CourseTablesService {
         }
         //新增选课记录
         XcChooseCourse xcChooseCourse;
-        if (DictionaryCode.COURSE_FREE.equals(coursepublish.getCharge())) {
-            xcChooseCourse = proxy.addCourse(userId, coursepublish, DictionaryCode.FREE);
+        if (StatusCodeEnum.FREE.getCode().equals(coursepublish.getCharge())) {
+            xcChooseCourse = proxy.chooseCourse(userId, coursepublish, StatusCodeEnum.FREE_COURSE.getCode());
             proxy.addCourseTables(xcChooseCourse);
         } else {
-            xcChooseCourse = proxy.addCourse(userId, coursepublish, DictionaryCode.CHARGE);
+            xcChooseCourse = proxy.chooseCourse(userId, coursepublish, StatusCodeEnum.CHARGE_COURSE.getCode());
         }
         XcChooseCourseDto xcChooseCourseDto = new XcChooseCourseDto();
         BeanUtils.copyProperties(xcChooseCourse, xcChooseCourseDto);
@@ -73,15 +73,15 @@ public class CourseTablesServiceImpl implements CourseTablesService {
         XcCourseTablesDto xcCourseTablesDto = new XcCourseTablesDto();
         BeanUtils.copyProperties(xcCourseTables, xcCourseTablesDto);
         if (xcCourseTablesDto.getValidtimeEnd().isAfter(LocalDateTime.now())) {
-            xcCourseTablesDto.setLearnStatus(DictionaryCode.NORMAL_STUDY);
+            xcCourseTablesDto.setLearnStatus(StatusCodeEnum.NORMAL_STUDY.getCode());
         } else {
-            xcCourseTablesDto.setLearnStatus(DictionaryCode.EXPIRED);
+            xcCourseTablesDto.setLearnStatus(StatusCodeEnum.EXPIRED.getCode());
         }
         return xcCourseTablesDto;
     }
 
     /**
-     * 添加课程
+     * 添加选课记录
      *
      * @param userId        用户id
      * @param coursePublish 课程信息
@@ -89,12 +89,12 @@ public class CourseTablesServiceImpl implements CourseTablesService {
      * @return 选课信息
      */
     @Transactional(rollbackFor = Exception.class)
-    public XcChooseCourse addCourse(String userId, CoursePublish coursePublish, String chargeState) {
+    public XcChooseCourse chooseCourse(String userId, CoursePublish coursePublish, String chargeState) {
         String successState;
-        if (DictionaryCode.FREE.equals(chargeState)) {
-            successState = DictionaryCode.CHOOSE_SUCCESS;
+        if (StatusCodeEnum.FREE_COURSE.getCode().equals(chargeState)) {
+            successState = StatusCodeEnum.CHOOSE_SUCCESS.getCode();
         } else {
-            successState = DictionaryCode.WAIT_PAY;
+            successState = StatusCodeEnum.WAIT_PAY.getCode();
         }
         LambdaQueryWrapper<XcChooseCourse> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper = queryWrapper.eq(XcChooseCourse::getUserId, userId)
@@ -133,7 +133,7 @@ public class CourseTablesServiceImpl implements CourseTablesService {
     @Transactional(rollbackFor = Exception.class)
     public XcCourseTables addCourseTables(XcChooseCourse xcChooseCourse) {
         String status = xcChooseCourse.getStatus();
-        if (!DictionaryCode.CHOOSE_SUCCESS.equals(status)) {
+        if (!StatusCodeEnum.CHOOSE_SUCCESS.getCode().equals(status)) {
             XueChengPlusException.cast("选课未成功，无法添加到课程表");
         }
         XcCourseTables xcCourseTable = getXcCourseTables(xcChooseCourse.getUserId(), xcChooseCourse.getCourseId());
