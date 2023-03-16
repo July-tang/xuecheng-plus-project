@@ -1,5 +1,6 @@
 package com.xuecheng.learning.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.xuecheng.base.enums.StatusCodeEnum;
 import com.xuecheng.base.exception.XueChengPlusException;
@@ -12,6 +13,12 @@ import com.xuecheng.learning.model.dto.XcCourseTablesDto;
 import com.xuecheng.learning.model.po.XcChooseCourse;
 import com.xuecheng.learning.model.po.XcCourseTables;
 import com.xuecheng.learning.service.CourseTablesService;
+import com.xuecheng.messagesdk.config.RabbitMqConfig;
+import com.xuecheng.messagesdk.model.po.MqMessage;
+import com.xuecheng.messagesdk.service.MqMessageService;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.Message;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +30,7 @@ import java.util.List;
 /**
  * @author july
  */
+@Slf4j
 @Service
 public class CourseTablesServiceImpl implements CourseTablesService {
 
@@ -34,6 +42,9 @@ public class CourseTablesServiceImpl implements CourseTablesService {
 
     @Resource
     ContentServiceClient contentServiceClient;
+
+    @Resource
+    MqMessageService mqMessageService;
 
     @Resource
     CourseTablesServiceImpl proxy;
@@ -48,7 +59,7 @@ public class CourseTablesServiceImpl implements CourseTablesService {
         XcChooseCourse xcChooseCourse;
         if (StatusCodeEnum.FREE.getCode().equals(coursepublish.getCharge())) {
             xcChooseCourse = proxy.chooseCourse(userId, coursepublish, StatusCodeEnum.FREE_COURSE.getCode());
-            proxy.addCourseTables(xcChooseCourse);
+            XcCourseTables courseTables = proxy.addCourseTables(xcChooseCourse);
         } else {
             xcChooseCourse = proxy.chooseCourse(userId, coursepublish, StatusCodeEnum.CHARGE_COURSE.getCode());
         }
@@ -163,4 +174,23 @@ public class CourseTablesServiceImpl implements CourseTablesService {
         return xcCourseTablesMapper.selectOne(new LambdaQueryWrapper<XcCourseTables>().eq(XcCourseTables::getUserId, userId).eq(XcCourseTables::getCourseId, courseId));
     }
 
+    @RabbitListener(queues = RabbitMqConfig.PAY_NOTIFY_QUEUE)
+    @Transactional(rollbackFor = Exception.class)
+    public void receive(Message message) {
+        MqMessage mqMessage = JSON.parseObject(new String(message.getBody()), MqMessage.class);
+        log.debug("学习中心服务接收支付结果:{}", mqMessage);
+
+        //选课记录id
+        String chooseCourseId  = mqMessage.getBusinessKey1();
+        XcChooseCourse chooseCourse = xcChooseCourseMapper.selectById(chooseCourseId);
+        if (chooseCourse != null) {
+            if (!StatusCodeEnum.WAIT_PAY.getCode().equals(chooseCourse.getStatus())) {
+                log.debug("该课程已完成选课：{}", chooseCourse);
+                return;
+            }
+            chooseCourse.setStatus(StatusCodeEnum.CHOOSE_SUCCESS.getCode());
+            xcChooseCourseMapper.updateById(chooseCourse);
+            proxy.addCourseTables(chooseCourse);
+        }
+    }
 }

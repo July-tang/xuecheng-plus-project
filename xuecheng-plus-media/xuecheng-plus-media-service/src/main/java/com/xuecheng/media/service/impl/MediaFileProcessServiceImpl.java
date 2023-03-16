@@ -22,7 +22,6 @@ import javax.annotation.Resource;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * @author july
@@ -84,7 +83,7 @@ public class MediaFileProcessServiceImpl implements MediaFileProcessService {
         mediaProcessMapper.deleteById(mediaProcess.getId());
     }
 
-    @RabbitListener(queues = {RabbitMqConfig.VIDEO_PROCESS_QUEUE_NAME})
+    @RabbitListener(queues = {RabbitMqConfig.VIDEO_PROCESS_QUEUE})
     public void videoProcessMessage(Message msg) {
         File originFile = null;
         File mp4File = null;

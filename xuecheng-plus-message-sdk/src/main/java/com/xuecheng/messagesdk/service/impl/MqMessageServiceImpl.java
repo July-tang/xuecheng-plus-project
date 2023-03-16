@@ -1,5 +1,6 @@
 package com.xuecheng.messagesdk.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.xuecheng.messagesdk.config.RabbitMqConfig;
@@ -42,22 +43,23 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
     RabbitTemplate rabbitTemplate;
 
     @Override
-    public MqMessage addMessage(Long id, String businessKey1, String businessKey2, String businessKey3) {
+    public MqMessage addMessage(String messageType, String businessKey1, String businessKey2, String businessKey3) {
         MqMessage mqMessage = new MqMessage();
-        mqMessage.setId(id);
+        mqMessage.setMessageType(messageType);
         mqMessage.setBusinessKey1(businessKey1);
         mqMessage.setBusinessKey2(businessKey2);
         mqMessage.setBusinessKey3(businessKey3);
         boolean save = mqMessageService.saveOrUpdate(mqMessage);
-        if (save) {
-            rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE_NAME,
-                    businessKey1, String.valueOf(id));
-            rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE_NAME,
-                    businessKey2, String.valueOf(id));
-            return mqMessage;
-        } else {
+        String message = JSON.toJSONString(mqMessage);
+        if (!save) {
             return null;
         }
+        if (messageType.equals(RabbitMqConfig.COURSE_PUBLISH)) {
+            rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE, "", message);
+        } else if (messageType.equals(RabbitMqConfig.PAY_NOTIFY)) {
+            rabbitTemplate.convertAndSend(RabbitMqConfig.PAY_NOTIFY_EXCHANGE, "", message);
+        }
+        return mqMessage;
     }
 
     @Transactional(rollbackFor = Exception.class)

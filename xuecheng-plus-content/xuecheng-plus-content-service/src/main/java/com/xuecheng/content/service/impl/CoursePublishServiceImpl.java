@@ -170,7 +170,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
      * @param courseId 课程id
      */
     private void saveCoursePublishMessage(Long courseId) {
-        MqMessage mqMessage = mqMessageService.addMessage(courseId, RabbitMqConfig.COURSE_STATICS, RabbitMqConfig.ADD_INDEX, null);
+        MqMessage mqMessage = mqMessageService.addMessage(RabbitMqConfig.COURSE_PUBLISH, courseId.toString(), null, null);
         if (mqMessage == null){
             XueChengPlusException.cast(CommonError.UNKNOWN_ERROR);
         }
@@ -257,12 +257,17 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     }
 
 
-    @RabbitListener(queues = {RabbitMqConfig.COURSE_STATICS_QUEUE_NAME})
+    @RabbitListener(queues = {RabbitMqConfig.COURSE_STATICS_QUEUE})
     public void courseStaticMessage(Message msg) {
-        String id = new String(msg.getBody());
-        long courseId = Long.parseLong(id);
-        if (FINISH_STATE.equals(mqMessageService.getStageOne(courseId))){
-            log.debug("该课程静态化课程信息任务已经完成不再处理,任务id:{}", id);
+        MqMessage message = JSON.parseObject(new String(msg.getBody()), MqMessage.class);
+        Long id = message.getId();
+        if (mqMessageService.getById(id) == null) {
+            log.debug("该消息已被处理, 任务id:{}", id);
+            return;
+        }
+        long courseId = Long.parseLong(message.getBusinessKey1());
+        if (FINISH_STATE.equals(mqMessageService.getStageOne(id))){
+            log.debug("该课程静态化课程信息任务已经完成不再处理, 课程id:{}", courseId);
             return;
         }
         //生成静态化页面
@@ -272,18 +277,23 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         }
         //上传静态化页面
         uploadCourseHtml(courseId, file);
-        mqMessageService.completedStageOne(courseId);
+        mqMessageService.completedStageOne(id);
     }
 
-    @RabbitListener(queues = {RabbitMqConfig.ADD_INDEX_QUEUE_NAME})
+    @RabbitListener(queues = {RabbitMqConfig.ADD_INDEX_QUEUE})
     public void saveCourseIndexMessage(Message msg) {
-        String id = new String(msg.getBody());
-        long courseId = Long.parseLong(id);
-        if (FINISH_STATE.equals(mqMessageService.getStageTwo(courseId))){
-            log.debug("该课程是索引信息已经添加不再处理,任务id:{}", id);
+        MqMessage message = JSON.parseObject(new String(msg.getBody()), MqMessage.class);
+        Long id = message.getId();
+        if (mqMessageService.getById(id) == null) {
+            log.debug("该消息已被处理, 任务id:{}", id);
+            return;
+        }
+        long courseId = Long.parseLong(message.getBusinessKey1());
+        if (FINISH_STATE.equals(mqMessageService.getStageTwo(id))){
+            log.debug("该课程是索引信息已经添加不再处理,课程id:{}", courseId);
             return;
         }
         saveCourseIndex(courseId);
-        mqMessageService.completedStageTwo(courseId);
+        mqMessageService.completedStageTwo(id);
     }
 }

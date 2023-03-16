@@ -9,7 +9,7 @@ public class AlipayConfig {
     /**
      * 服务器异步通知页面路径
      */
-    public static String notifyUrl = " http://rcwai8.natappfree.cc/orders/receivenotify";
+    public static String notifyUrl = "http://ywhjxz.natappfree.cc/orders/receivenotify";
     /**
      * 页面跳转同步通知页面路径
       */

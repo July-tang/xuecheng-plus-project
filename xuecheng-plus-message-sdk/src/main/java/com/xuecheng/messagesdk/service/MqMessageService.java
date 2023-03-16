@@ -18,13 +18,13 @@ public interface MqMessageService extends IService<MqMessage> {
     /**
      * 添加消息
      *
-     * @param id           消息id
+     * @param messageType 消息类型
      * @param businessKey1 业务id
      * @param businessKey2 业务id
      * @param businessKey3 业务id
      * @return com.xuecheng.messagesdk.model.po.MqMessage 消息内容
      */
-    MqMessage addMessage(Long id, String businessKey1, String businessKey2, String businessKey3);
+    MqMessage addMessage(String messageType, String businessKey1, String businessKey2, String businessKey3);
 
     /**
      * 完成全部任务

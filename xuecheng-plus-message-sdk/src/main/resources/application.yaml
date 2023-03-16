@@ -1,9 +1,4 @@
 spring:
-  rabbitmq:
-    host: 106.53.147.3
-    port: 5672
-    username: admin
-    password: 823113
   cloud:
     nacos:
       server-addr: 106.53.147.3:8848
@@ -14,6 +9,9 @@ spring:
         refresh-enabled: true
         shared-configs:
           - data-id: logging-${spring.profiles.active}.yaml
+            group: xuecheng-plus-common
+            refresh: true
+          - data-id: rabbitmq-${spring.profiles.active}.yaml
             group: xuecheng-plus-common
             refresh: true
   profiles:

@@ -6,6 +6,8 @@ import com.xuecheng.base.enums.StatusCodeEnum;
 import com.xuecheng.base.exception.XueChengPlusException;
 import com.xuecheng.base.utils.IdWorkerUtils;
 import com.xuecheng.base.utils.QRCodeUtil;
+import com.xuecheng.messagesdk.config.RabbitMqConfig;
+import com.xuecheng.messagesdk.service.MqMessageService;
 import com.xuecheng.orders.mapper.XcOrdersGoodsMapper;
 import com.xuecheng.orders.mapper.XcOrdersMapper;
 import com.xuecheng.orders.mapper.XcPayRecordMapper;
@@ -40,6 +42,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Resource
     XcOrdersGoodsMapper ordersGoodsMapper;
+
+    @Resource
+    MqMessageService mqMessageService;
 
     @Resource
     OrderServiceImpl proxy;
@@ -174,6 +179,7 @@ public class OrderServiceImpl implements OrderService {
         if (ordersMapper.updateById(order) <= 0) {
             XueChengPlusException.cast("订单结果更新失败！");
         }
+        mqMessageService.addMessage(RabbitMqConfig.PAY_NOTIFY, order.getOutBusinessId(), null, null);
     }
 
     /**
