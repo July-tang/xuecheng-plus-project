@@ -2,12 +2,15 @@ package com.xuecheng.learning.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.xuecheng.base.enums.StatusCodeEnum;
 import com.xuecheng.base.exception.XueChengPlusException;
+import com.xuecheng.base.model.PageResult;
 import com.xuecheng.content.model.po.CoursePublish;
 import com.xuecheng.learning.feign.ContentServiceClient;
 import com.xuecheng.learning.mapper.XcChooseCourseMapper;
 import com.xuecheng.learning.mapper.XcCourseTablesMapper;
+import com.xuecheng.learning.model.dto.MyCourseTableParams;
 import com.xuecheng.learning.model.dto.XcChooseCourseDto;
 import com.xuecheng.learning.model.dto.XcCourseTablesDto;
 import com.xuecheng.learning.model.po.XcChooseCourse;
@@ -35,10 +38,10 @@ import java.util.List;
 public class CourseTablesServiceImpl implements CourseTablesService {
 
     @Resource
-    XcChooseCourseMapper xcChooseCourseMapper;
+    XcChooseCourseMapper chooseCourseMapper;
 
     @Resource
-    XcCourseTablesMapper xcCourseTablesMapper;
+    XcCourseTablesMapper courseTablesMapper;
 
     @Resource
     ContentServiceClient contentServiceClient;
@@ -91,6 +94,21 @@ public class CourseTablesServiceImpl implements CourseTablesService {
         return xcCourseTablesDto;
     }
 
+    @Override
+    public PageResult<XcCourseTables> getCourseTablePage(MyCourseTableParams params) {
+        //页码
+        long pageNo = params.getPage();
+        //每页记录数, 固定为4
+        long pageSize = 4;
+        Page<XcCourseTables> page = new Page<>(pageNo, pageSize);
+        //根据用户id查询
+        String userId = params.getUserId();
+        LambdaQueryWrapper<XcCourseTables> lambdaQueryWrapper = new LambdaQueryWrapper<XcCourseTables>().eq(XcCourseTables::getUserId, userId);
+        //分页查询
+        Page<XcCourseTables> pageResult = courseTablesMapper.selectPage(page, lambdaQueryWrapper);
+        return new PageResult<>(pageResult.getRecords(), pageResult.getTotal(), pageNo, pageSize);
+    }
+
     /**
      * 添加选课记录
      *
@@ -112,7 +130,7 @@ public class CourseTablesServiceImpl implements CourseTablesService {
                 .eq(XcChooseCourse::getCourseId, coursePublish.getId())
                 .eq(XcChooseCourse::getOrderType, chargeState)
                 .eq(XcChooseCourse::getStatus, successState);
-        List<XcChooseCourse> xcChooseCourses = xcChooseCourseMapper.selectList(queryWrapper);
+        List<XcChooseCourse> xcChooseCourses = chooseCourseMapper.selectList(queryWrapper);
         if (xcChooseCourses != null && xcChooseCourses.size() > 0) {
             return xcChooseCourses.get(0);
         }
@@ -129,7 +147,7 @@ public class CourseTablesServiceImpl implements CourseTablesService {
         xcChooseCourse.setValidDays(coursePublish.getValidDays());
         xcChooseCourse.setValidtimeStart(LocalDateTime.now());
         xcChooseCourse.setValidtimeEnd(LocalDateTime.now().plusDays(coursePublish.getValidDays()));
-        if (xcChooseCourseMapper.insert(xcChooseCourse) <= 0) {
+        if (chooseCourseMapper.insert(xcChooseCourse) <= 0) {
             XueChengPlusException.cast("新增选课记录失败！");
         }
         return xcChooseCourse;
@@ -157,7 +175,7 @@ public class CourseTablesServiceImpl implements CourseTablesService {
         xcCourseTable.setUpdateDate(LocalDateTime.now());
         xcCourseTable.setCreateDate(LocalDateTime.now());
         xcCourseTable.setCourseType(xcChooseCourse.getOrderType());
-        if (xcCourseTablesMapper.insert(xcCourseTable) <= 0) {
+        if (courseTablesMapper.insert(xcCourseTable) <= 0) {
             XueChengPlusException.cast("添加到课程表失败！");
         }
         return xcCourseTable;
@@ -171,7 +189,7 @@ public class CourseTablesServiceImpl implements CourseTablesService {
      * @return XcCourseTables 课程
      */
     private XcCourseTables getXcCourseTables(String userId, Long courseId) {
-        return xcCourseTablesMapper.selectOne(new LambdaQueryWrapper<XcCourseTables>().eq(XcCourseTables::getUserId, userId).eq(XcCourseTables::getCourseId, courseId));
+        return courseTablesMapper.selectOne(new LambdaQueryWrapper<XcCourseTables>().eq(XcCourseTables::getUserId, userId).eq(XcCourseTables::getCourseId, courseId));
     }
 
     @RabbitListener(queues = RabbitMqConfig.PAY_NOTIFY_QUEUE)
@@ -182,14 +200,14 @@ public class CourseTablesServiceImpl implements CourseTablesService {
 
         //选课记录id
         String chooseCourseId  = mqMessage.getBusinessKey1();
-        XcChooseCourse chooseCourse = xcChooseCourseMapper.selectById(chooseCourseId);
+        XcChooseCourse chooseCourse = chooseCourseMapper.selectById(chooseCourseId);
         if (chooseCourse != null) {
             if (!StatusCodeEnum.WAIT_PAY.getCode().equals(chooseCourse.getStatus())) {
                 log.debug("该课程已完成选课：{}", chooseCourse);
                 return;
             }
             chooseCourse.setStatus(StatusCodeEnum.CHOOSE_SUCCESS.getCode());
-            xcChooseCourseMapper.updateById(chooseCourse);
+            chooseCourseMapper.updateById(chooseCourse);
             proxy.addCourseTables(chooseCourse);
         }
     }

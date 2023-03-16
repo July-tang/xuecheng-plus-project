@@ -8,7 +8,8 @@ import lombok.ToString;
 import java.util.List;
 
 /**
- * @description 分页查询结果模型类
+ * 分页查询结果模型类
+ *
  * @author July
  */
 @Data
