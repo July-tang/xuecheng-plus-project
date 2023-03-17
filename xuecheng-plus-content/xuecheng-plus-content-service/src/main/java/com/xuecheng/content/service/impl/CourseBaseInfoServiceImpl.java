@@ -98,6 +98,9 @@ public class CourseBaseInfoServiceImpl implements CourseBaseInfoService {
     public CourseBaseInfoDto getCourseBaseInfo(Long courseId) {
         CourseBaseInfoDto courseBaseInfoDto = new CourseBaseInfoDto();
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
+        if (courseBase == null) {
+            return null;
+        }
         CourseMarket courseMarket = courseMarketService.getById(courseId);
         //组装课程基本信息
         BeanUtils.copyProperties(courseBase, courseBaseInfoDto);

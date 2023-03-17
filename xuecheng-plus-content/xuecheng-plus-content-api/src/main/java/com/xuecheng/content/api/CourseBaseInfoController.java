@@ -43,7 +43,7 @@ public class CourseBaseInfoController {
     @ApiOperation("课程信息新增接口")
     @PostMapping
     public CourseBaseInfoDto createCourseBase(@RequestBody @Validated AddCourseDto addCourseDto) {
-        Long companyId = 37L;
+        Long companyId = UserUtil.getCompanyId();
         return courseBaseInfoService.createCourseBase(companyId, addCourseDto);
     }
 
@@ -56,14 +56,14 @@ public class CourseBaseInfoController {
     @ApiOperation("课程信息修改接口")
     @PutMapping
     public CourseBaseInfoDto updateCourseBase(@RequestBody @Validated EditCourseDto editCourseDto) {
-        Long companyId = 37L;
+        Long companyId = UserUtil.getCompanyId();
         return courseBaseInfoService.updateCourseBase(companyId, editCourseDto);
     }
 
     @ApiOperation("课程信息删除接口")
     @DeleteMapping("/{courseId}")
     public void deleteCourseBase(@PathVariable Long courseId) {
-        Long companyId = 37L;
+        Long companyId = UserUtil.getCompanyId();
         courseBaseInfoService.deleteCourseBase(companyId, courseId);
     }
 }
