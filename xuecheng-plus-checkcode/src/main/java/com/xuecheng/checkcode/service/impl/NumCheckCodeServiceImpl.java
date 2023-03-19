@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import javax.annotation.Resource;
 
 /**
+ * 数字验证码实现类
+ *
  * @author july
  */
 @Slf4j

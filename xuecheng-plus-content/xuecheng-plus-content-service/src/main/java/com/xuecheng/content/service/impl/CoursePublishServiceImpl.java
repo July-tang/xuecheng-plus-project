@@ -225,9 +225,8 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     @Override
     public void uploadCourseHtml(Long courseId, File file) {
         MultipartFile multipartFile = MultipartSupportConfig.getMultipartFile(file);
-        String course = null;
         try {
-            course = mediaServiceClient.uploadFile(multipartFile, "course", courseId + ".html");
+            String course = mediaServiceClient.uploadFile(multipartFile, "course", courseId + ".html");
             if (course == null) {
                 XueChengPlusException.cast("远程调用媒资服务上传文件失败");
             }
@@ -288,6 +287,11 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     }
 
 
+    /**
+     * 课程静态化队列处理消息
+     *
+     * @param msg 消息
+     */
     @RabbitListener(queues = {RabbitMqConfig.COURSE_STATICS_QUEUE})
     public void courseStaticMessage(Message msg) {
         MqMessage message = JSON.parseObject(new String(msg.getBody()), MqMessage.class);
@@ -311,6 +315,11 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         mqMessageService.completedStageOne(id);
     }
 
+    /**
+     * 添加索引队列处理消息
+     *
+     * @param msg
+     */
     @RabbitListener(queues = {RabbitMqConfig.ADD_INDEX_QUEUE})
     public void saveCourseIndexMessage(Message msg) {
         MqMessage message = JSON.parseObject(new String(msg.getBody()), MqMessage.class);

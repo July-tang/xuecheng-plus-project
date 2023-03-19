@@ -1,8 +1,9 @@
 package com.xuecheng.base.exception;
 
 /**
+ * 项目异常类
+ *
  * @author july
- * @description 项目异常类
  */
 public class XueChengPlusException extends RuntimeException {
 

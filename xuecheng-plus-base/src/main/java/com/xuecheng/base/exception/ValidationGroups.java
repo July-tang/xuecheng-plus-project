@@ -1,8 +1,9 @@
 package com.xuecheng.base.exception;
 
 /**
+ * 参数校验分组
+ *
  * @author july
- * @description 参数校验分组
  */
 public class ValidationGroups {
 

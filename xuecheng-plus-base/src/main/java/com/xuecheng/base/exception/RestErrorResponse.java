@@ -7,8 +7,9 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
+ * 异常响应体
+ *
  * @author july
- * @description 异常响应体
  */
 @Data
 @NoArgsConstructor

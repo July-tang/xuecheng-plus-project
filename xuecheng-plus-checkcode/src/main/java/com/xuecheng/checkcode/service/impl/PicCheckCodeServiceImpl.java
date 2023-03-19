@@ -17,7 +17,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 
 /**
- * 图片验证码生成器
+ * Kaptcha图片验证码接口实现类
  *
  * @author july
  */

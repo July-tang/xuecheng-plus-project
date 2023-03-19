@@ -13,8 +13,9 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import java.util.List;
 
 /**
+ * 全局异常处理器
+ *
  * @author july
- * @description 全局异常处理器
  */
 @Slf4j
 @ControllerAdvice
@@ -46,7 +47,7 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public RestErrorResponse doException(Exception exception) {
         log.error("系统异常：{}", exception.getMessage());
-        if(ACCESS_DENIED.equals(exception.getMessage())){
+        if (ACCESS_DENIED.equals(exception.getMessage())) {
             return new RestErrorResponse("没有操作此功能的权限");
         }
         return new RestErrorResponse(CommonError.UNKNOWN_ERROR.getErrMessage());

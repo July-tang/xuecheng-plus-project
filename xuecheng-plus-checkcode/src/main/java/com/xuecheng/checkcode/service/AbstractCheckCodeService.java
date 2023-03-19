@@ -20,16 +20,21 @@ public abstract class AbstractCheckCodeService implements CheckCodeService {
 
     /**
      * 设置验证码生成器
+     *
      * @param checkCodeGenerator 验证码生成器
      */
     public abstract void setCheckCodeGenerator(CheckCodeGenerator checkCodeGenerator);
+
     /**
      * 设置验证码key生成器
+     *
      * @param keyGenerator 验证码生成器
      */
     public abstract void setKeyGenerator(KeyGenerator keyGenerator);
+
     /**
      * 设置验证码存储器
+     *
      * @param checkCodeStore 验证码存储器
      */
     public abstract void setCheckCodeStore(CheckCodeStore checkCodeStore);

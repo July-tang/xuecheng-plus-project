@@ -1,8 +1,9 @@
 package com.xuecheng.base.exception;
 
 /**
+ * 通用错误信息
+ *
  * @author july
- * @description 通用错误信息
  */
 public enum CommonError {
 
