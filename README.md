@@ -1,5 +1,5 @@
 # xuecheng-plus-project
-原型为黑马学成在线项目
+原型为黑马学成在线项目，B站视频地址：https://www.bilibili.com/video/BV1j8411N7Bm/
 
 本人修改如下: 
 
