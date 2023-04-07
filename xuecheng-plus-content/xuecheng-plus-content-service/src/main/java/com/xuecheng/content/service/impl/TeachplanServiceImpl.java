@@ -129,7 +129,6 @@ public class TeachplanServiceImpl implements TeachplanService {
         LambdaQueryWrapper<Teachplan> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.eq(Teachplan::getCourseId, teachplan.getCourseId());
         queryWrapper.eq(Teachplan::getParentid, teachplan.getParentid());
-        queryWrapper.orderByAsc(Teachplan::getOrderby);
         List<Teachplan> teachplanList = teachplanMapper.selectList(queryWrapper);
         int left = 0, right = teachplanList.size() - 1;
         //二分查找课程计划所在的位置
