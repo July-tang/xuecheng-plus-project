@@ -23,8 +23,11 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.amqp.core.Message;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -88,24 +91,17 @@ public class CoursePublishServiceImpl implements CoursePublishService {
     @Resource
     RedisTemplate<String, String> redisTemplate;
 
+    @Resource
+    RedissonClient redissonClient;
+
     Random random = new Random();
 
     @Override
     public CoursePreviewDto getCoursePreviewInfo(Long courseId) {
-        if (redisTemplate.opsForValue().get(redisPrefix + courseId) != null) {
-            String json = redisTemplate.opsForValue().get(redisPrefix + courseId);
-            return JSON.parseObject(json, CoursePreviewDto.class);
-        }
         CourseBaseInfoDto courseBaseInfo = courseBaseInfoService.getCourseBaseInfo(courseId);
-        if (courseBaseInfo == null) {
-            redisTemplate.opsForValue().set(redisPrefix + courseId, "null", random.nextInt(10) + 30, TimeUnit.SECONDS);
-            return null;
-        }
         List<TeachplanDto> teachplanTree = teachplanService.findTeachplanTree(courseId);
         List<CourseTeacher> teacherList = courseTeacherService.getCourseTeacherList(courseId);
-        CoursePreviewDto coursePreview = new CoursePreviewDto(courseBaseInfo, teachplanTree, teacherList);
-        redisTemplate.opsForValue().set("courseId:" + courseId, JSON.toJSONString(coursePreview), random.nextInt(3) + 4, TimeUnit.MINUTES);
-        return coursePreview;
+        return new CoursePreviewDto(courseBaseInfo, teachplanTree, teacherList);
     }
 
     @Override
@@ -173,15 +169,14 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         if (!StatusCodeEnum.AUDIT_PASS.getCode().equals(coursePublishPre.getStatus())) {
             XueChengPlusException.cast("操作失败，需要课程审核通过后才可发布。");
         }
-
         //保存课程发布信息
-        saveCoursePublish(courseId);
+        if (((CoursePublishServiceImpl) AopContext.currentProxy()).saveCoursePublish(courseId)) {
+            //保存消息表
+            ((CoursePublishServiceImpl) AopContext.currentProxy()).saveCoursePublishMessage(courseId);
 
-        //保存消息表
-        saveCoursePublishMessage(courseId);
-
-        //删除课程预发布表对应记录
-        coursePublishPreMapper.deleteById(courseId);
+            //删除课程预发布表对应记录
+            coursePublishPreMapper.deleteById(courseId);
+        }
     }
 
     /**
@@ -189,7 +184,8 @@ public class CoursePublishServiceImpl implements CoursePublishService {
      *
      * @param courseId 课程id
      */
-    private void saveCoursePublishMessage(Long courseId) {
+    @Transactional(rollbackFor = Exception.class)
+    public void saveCoursePublishMessage(Long courseId) {
         MqMessage mqMessage = mqMessageService.addMessage(RabbitMqConfig.COURSE_PUBLISH, courseId.toString(), null, null);
         if (mqMessage == null) {
             XueChengPlusException.cast(CommonError.UNKNOWN_ERROR);
@@ -253,11 +249,16 @@ public class CoursePublishServiceImpl implements CoursePublishService {
             return JSON.parseObject(json, CoursePublish.class);
         }
         CoursePublish coursePublish = coursePublishMapper.selectById(courseId);
+        RLock lock = redissonClient.getLock(redisPrefix + courseId);
         if (coursePublish == null) {
-            redisTemplate.opsForValue().set(redisPrefix + courseId, "null", random.nextInt(10) + 30, TimeUnit.SECONDS);
+            lock.lock();
+            redisTemplate.opsForValue().set(redisPrefix + courseId, "null", random.nextInt(10) + 25, TimeUnit.SECONDS);
+            lock.unlock();
             return null;
         }
-        redisTemplate.opsForValue().set(redisPrefix + courseId, JSON.toJSONString(coursePublish), random.nextInt(3) + 4, TimeUnit.MINUTES);
+        lock.lock();
+        redisTemplate.opsForValue().set(redisPrefix + courseId, JSON.toJSONString(coursePublish), random.nextInt(100) + 50, TimeUnit.SECONDS);
+        lock.unlock();
         return coursePublish;
     }
 
@@ -266,7 +267,8 @@ public class CoursePublishServiceImpl implements CoursePublishService {
      *
      * @param courseId 课程Id
      */
-    private void saveCoursePublish(Long courseId) {
+    @Transactional(rollbackFor = Exception.class)
+    public boolean saveCoursePublish(Long courseId) {
         CoursePublishPre coursePublishPre = coursePublishPreMapper.selectById(courseId);
         if (coursePublishPre == null) {
             XueChengPlusException.cast("课程预发布数据为空");
@@ -284,6 +286,7 @@ public class CoursePublishServiceImpl implements CoursePublishService {
         CourseBase courseBase = courseBaseMapper.selectById(courseId);
         courseBase.setStatus(StatusCodeEnum.COURSE_SUBMIT.getCode());
         courseBaseMapper.updateById(courseBase);
+        return true;
     }
 
 

@@ -1,7 +1,6 @@
 package com.xuecheng.content.feign.fallback;
 
 import com.xuecheng.content.feign.client.SearchServiceClient;
-import com.xuecheng.search.po.CourseIndex;
 import feign.hystrix.FallbackFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
