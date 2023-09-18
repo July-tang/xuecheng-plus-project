@@ -13,7 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import javax.annotation.Resource;
 
@@ -43,6 +46,7 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
     RabbitTemplate rabbitTemplate;
 
     @Override
+    @Transactional(rollbackFor = Exception.class, propagation = Propagation.REQUIRED)
     public MqMessage addMessage(String messageType, String businessKey1, String businessKey2, String businessKey3) {
         MqMessage mqMessage = new MqMessage();
         mqMessage.setMessageType(messageType);
@@ -54,11 +58,18 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
         if (!save) {
             return null;
         }
-        if (messageType.equals(RabbitMqConfig.COURSE_PUBLISH)) {
-            rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE, "", message);
-        } else if (messageType.equals(RabbitMqConfig.PAY_NOTIFY)) {
-            rabbitTemplate.convertAndSend(RabbitMqConfig.PAY_NOTIFY_EXCHANGE, "", message);
-        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == STATUS_COMMITTED) {
+                    if (messageType.equals(RabbitMqConfig.COURSE_PUBLISH)) {
+                        rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE, "", message);
+                    } else if (messageType.equals(RabbitMqConfig.PAY_NOTIFY)) {
+                        rabbitTemplate.convertAndSend(RabbitMqConfig.PAY_NOTIFY_EXCHANGE, "", message);
+                    }
+                }
+            }
+        });
         return mqMessage;
     }
 
