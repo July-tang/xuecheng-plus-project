@@ -10,6 +10,7 @@ import com.xuecheng.messagesdk.model.po.MqMessage;
 import com.xuecheng.messagesdk.model.po.MqMessageHistory;
 import com.xuecheng.messagesdk.service.MqMessageService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
@@ -63,14 +64,22 @@ public class MqMessageServiceImpl extends ServiceImpl<MqMessageMapper, MqMessage
             public void afterCompletion(int status) {
                 if (status == STATUS_COMMITTED) {
                     if (messageType.equals(RabbitMqConfig.COURSE_PUBLISH)) {
-                        rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE, "", message);
+                        rabbitTemplate.convertAndSend(RabbitMqConfig.COURSE_PUBLISH_EXCHANGE, "", message, new CorrelationData(mqMessage.getId().toString()));
                     } else if (messageType.equals(RabbitMqConfig.PAY_NOTIFY)) {
-                        rabbitTemplate.convertAndSend(RabbitMqConfig.PAY_NOTIFY_EXCHANGE, "", message);
+                        rabbitTemplate.convertAndSend(RabbitMqConfig.PAY_NOTIFY_EXCHANGE, "", message, new CorrelationData(mqMessage.getId().toString()));
                     }
                 }
             }
         });
         return mqMessage;
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public boolean failMessage(String id) {
+        MqMessage message = mqMessageMapper.selectById(id);
+        message.setExecuteNum(message.getExecuteNum() + 1);
+        return mqMessageMapper.updateById(message) > 0;
     }
 
     @Transactional(rollbackFor = Exception.class)

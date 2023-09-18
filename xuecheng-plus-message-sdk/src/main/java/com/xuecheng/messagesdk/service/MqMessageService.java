@@ -3,8 +3,6 @@ package com.xuecheng.messagesdk.service;
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.xuecheng.messagesdk.model.po.MqMessage;
 
-import java.util.List;
-
 /**
  * <p>
  * 服务类
@@ -25,6 +23,14 @@ public interface MqMessageService extends IService<MqMessage> {
      * @return com.xuecheng.messagesdk.model.po.MqMessage 消息内容
      */
     MqMessage addMessage(String messageType, String businessKey1, String businessKey2, String businessKey3);
+
+    /**
+     * 标记发送失败的消息
+     *
+     * @param id 消息Id
+     * @return 处理结果
+     */
+    boolean failMessage(String id);
 
     /**
      * 完成全部任务
